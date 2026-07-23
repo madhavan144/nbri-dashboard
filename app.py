@@ -1,11 +1,11 @@
 import streamlit as st  # type: ignore[import-not-found]
 import streamlit.components.v1 as components  # type: ignore[import-not-found]
-from PIL import Image
+
 # 1. Page Configuration (Full Screen)
-logo_image = "nbro-logo.png"
+
 st.set_page_config(
     page_title="NBRI - IHP Progress Dashboard",
-    page_icon=logo_image,
+  page_icon="https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp",  # Direct Logo Link
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -351,7 +351,7 @@ html_dashboard = """
                         <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white text-xs">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
-                        <h3 class="text-sm font-bold text-white">LIRIS AI Assistant</h3>
+                        <h3 class="text-sm font-bold text-white">HSPTD AI Assistant</h3>
                     </div>
                     <div id="ai-chat-box" class="flex-1 min-h-[160px] max-h-[220px] overflow-y-auto space-y-3 p-3 bg-slate-950/50 rounded-xl border border-slate-800/80 text-xs mb-3">
                         <div class="flex gap-2.5">
