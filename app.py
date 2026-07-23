@@ -1,5 +1,5 @@
-import streamlit as st
-import streamlit.components.v1 as components
+import streamlit as st # type: ignore[import-not-found]
+import streamlit.components.v1 as components # type: ignore[import-not-found]
 
 # 1. Page Configuration
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
@@ -308,7 +308,7 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION TABLE -->
+                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION TABLE (Replaces Barchart) -->
                 <div class="glass-panel rounded-2xl p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div>
@@ -370,30 +370,21 @@ html_template = """
                 </div>
             </div>
 
-            <!-- RIGHT 4 COLS (ORDER FIX: Selected Site Info FIRST, AI Assistant SECOND) -->
+            <!-- RIGHT 4 COLS -->
             <div class="lg:col-span-4 flex flex-col gap-6">
                 
-                <!-- 1. SELECTED SITE REPORT VIEWER & 10 KEY DETAILS CARD (FIRST) -->
-                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Report Link
-                            </h3>
-                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
-                        </div>
-                        <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
-                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full 10 key technical parameters and NBRI PDF report link here.</p>
-                        </div>
-                    </div>
-                    <div id="report-card-action" class="mt-4">
-                        <button disabled class="w-full py-2.5 bg-slate-800/80 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Select a Site to Open Official Link
-                        </button>
+                <!-- CONCEPTUAL LAND SUBDIVISION PLAN STATUS (Replaces Pie Chart) -->
+                <div class="glass-panel rounded-2xl p-5">
+                    <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
+                    <div class="relative h-[220px] flex items-center justify-center">
+                        <canvas id="subdivisionChart"></canvas>
                     </div>
                 </div>
 
-                <!-- 2. AI ASSISTANT CARD (SECOND - BELOW SITE INFO) -->
+                <!-- AI ASSISTANT -->
                 <div class="glass-panel-glow rounded-2xl p-5 flex flex-col">
                     <div class="flex items-center gap-2.5 mb-3">
                         <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white text-xs shadow-lg shadow-purple-500/20">
@@ -420,14 +411,23 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- 3. CONCEPTUAL LAND SUBDIVISION PLAN STATUS (THIRD) -->
-                <div class="glass-panel rounded-2xl p-5">
-                    <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
-                        <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
-                    </h3>
-                    <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
-                    <div class="relative h-[220px] flex items-center justify-center">
-                        <canvas id="subdivisionChart"></canvas>
+                <!-- SELECTED SITE REPORT VIEWER & 10 KEY DETAILS CARD -->
+                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Report Link
+                            </h3>
+                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
+                        </div>
+                        <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
+                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full 10 key technical parameters and NBRI PDF report link here.</p>
+                        </div>
+                    </div>
+                    <div id="report-card-action" class="mt-4">
+                        <button disabled class="w-full py-2.5 bg-slate-800/80 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Select a Site to Open Official Link
+                        </button>
                     </div>
                 </div>
 
@@ -472,11 +472,10 @@ html_template = """
         function initMap() {
             mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([6.9, 80.6], 8);
             
-            // CartoDB Dark Matter High-Quality Basemap
+            // MapTiler / Carto Dark Basemap Tile Layer
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19,
-                subdomains: 'abcd',
-                attribution: '&copy; CARTO'
+                maxZoom: 18,
+                subdomains: 'abcd'
             }).addTo(mapInstance);
 
             markersGroup = L.layerGroup().addTo(mapInstance);
@@ -540,11 +539,12 @@ html_template = """
             applyFilters();
         }
 
-        // Safe URL Formatter to prevent link breaks
+        // Safe URL Formatter to prevent target="_top" dashboard resets
         function formatReportURL(rawLink, estateName) {
             if (!rawLink || rawLink.trim() === '' || rawLink.trim() === '-') return '';
             let cleaned = rawLink.trim();
             if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
+            // If text link name, create external direct drive/search lookup link
             return `https://www.google.com/search?q=NBRI+Report+${encodeURIComponent(cleaned)}+${encodeURIComponent(estateName)}`;
         }
 
@@ -596,6 +596,7 @@ html_template = """
             document.getElementById('kpi-bod-pct').textContent = `${bodPct}%`;
         }
 
+        // Render District Summary Table (Replaces Bar Chart)
         function renderDistrictSummaryTable() {
             const summaryBody = document.getElementById('district-summary-body');
             summaryBody.innerHTML = '';
@@ -618,6 +619,7 @@ html_template = """
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
                 
+                // Clicking district row filters map to that district
                 tr.onclick = () => {
                     document.getElementById('filter-district').value = row.district;
                     applyFilters();
@@ -651,6 +653,7 @@ html_template = """
 
             const districtTag = document.getElementById('district-tag');
 
+            // Highlight Selected District with Blue Glow Ring & Auto-Fly
             if (selectedDistrict !== 'ALL' && districtCoordinates[selectedDistrict]) {
                 const coords = districtCoordinates[selectedDistrict];
                 districtTag.classList.remove('hidden');
@@ -690,6 +693,7 @@ html_template = """
                     ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open NBRI PDF Report</a>`
                     : '<span class="text-[10px] text-slate-400 mt-1 block">No direct PDF link attached</span>';
 
+                // Popup displaying 10 Key Site Specs
                 marker.bindPopup(`
                     <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
                         <h4 style="font-weight:700; color:#38bdf8; font-size:14px; margin-bottom:6px;">${site.estate}</h4>
@@ -718,7 +722,7 @@ html_template = """
         }
 
         function initCharts() {
-            // CONCEPTUAL SUBDIVISION PLAN CHART (Border-only Theme Fill Style)
+            // CONCEPTUAL SUBDIVISION PLAN CHART (Replaces Pie Chart)
             const ctxSub = document.getElementById('subdivisionChart').getContext('2d');
             subdivisionChartInstance = new Chart(ctxSub, {
                 type: 'doughnut',
@@ -726,11 +730,8 @@ html_template = """
                     labels: ['Completed', 'In Progress', 'Not Required', 'Pending'],
                     datasets: [{
                         data: [0, 0, 0, 0],
-                        // Page Theme Fill Color Inside (#080a14)
-                        backgroundColor: '#080a14',
-                        // Vibrant Border Outline Colors
-                        borderColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
-                        borderWidth: 3,
+                        backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 0,
                         hoverOffset: 6
                     }]
                 },
@@ -793,7 +794,7 @@ html_template = """
             });
         }
 
-        // Populates Selected Site Card with 10 Key Details
+        // Populates the Selected Site Viewer Panel with 10 Key Details
         function selectSiteRow(site) {
             if (mapInstance && site.lat && site.lng) {
                 mapInstance.setView([site.lat, site.lng], 13);
