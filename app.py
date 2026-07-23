@@ -1,5 +1,5 @@
-import streamlit as st
-import streamlit.components.v1 as components
+import streamlit as st # type: ignore[import-not-found]
+import streamlit.components.v1 as components # type: ignore[import-not-found]
 
 # 1. Page Configuration
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
@@ -153,7 +153,7 @@ html_template = """
         }
 
         .leaflet-container {
-            background: #050811 !important;
+            background: #091224 !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
         }
         .leaflet-popup-content-wrapper {
@@ -292,37 +292,37 @@ html_template = """
             <!-- LEFT 8 COLS -->
             <div class="lg:col-span-8 flex flex-col gap-6">
                 
-                <!-- GIS MAP WITH ESRI WORLD NAVIGATION DARK BLUE CANVAS BASEMAP -->
+                <!-- GIS MAP WITH ESRI WORLD NAVIGATION MAP (DARK BLUE) -->
                 <div class="glass-panel rounded-2xl p-5 relative flex flex-col">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
                             <div class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></div>
-                            <h3 class="text-base font-bold text-white">Interactive GIS Site Location Map (Esri Dark Navigation)</h3>
+                            <h3 class="text-base font-bold text-white">Esri World Navigation Map (Dark Blue) GIS Tracker</h3>
                         </div>
                         <span id="district-tag" class="hidden text-xs px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-500/10 font-medium">
-                            <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> Highlighted District Focused
+                            <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> District Boundary Highlighted
                         </span>
                     </div>
-                    <div class="w-full h-[420px] rounded-xl overflow-hidden relative border border-slate-800" id="map-container">
+                    <div class="w-full h-[450px] rounded-xl overflow-hidden relative border border-slate-800" id="map-container">
                         <div id="map" class="w-full h-full z-10"></div>
                     </div>
                 </div>
 
-                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION VISUAL BAR CHART -->
+                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION BAR CHART -->
                 <div class="glass-panel rounded-2xl p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-chart-column text-cyan-400 text-sm"></i> District-wise Housing Unit Distribution Visual
+                                <i class="fa-solid fa-chart-column text-cyan-400 text-sm"></i> District-wise Housing Unit Distribution Visual Chart
                             </h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Graphical visualization of planned resettlement capacity per district</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Live graphical visualization of total capacity allocated per district</p>
                         </div>
                         <span class="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
-                            <i class="fa-solid fa-chart-pie mr-1"></i> Dynamic Chart
+                            <i class="fa-solid fa-chart-bar mr-1"></i> Interactive Chart
                         </span>
                     </div>
                     
-                    <div class="relative h-[280px] w-full p-2">
+                    <div class="relative h-[280px] w-full">
                         <canvas id="districtBarChart"></canvas>
                     </div>
                 </div>
@@ -357,20 +357,31 @@ html_template = """
                 </div>
             </div>
 
-            <!-- RIGHT 4 COLS (ORDER FIX: Site Info -> Chart -> AI Assistant at bottom) -->
+            <!-- RIGHT 4 COLS -->
             <div class="lg:col-span-4 flex flex-col gap-6">
                 
-                <!-- 1. SELECTED SITE REPORT VIEWER & 10 KEY DETAILS CARD -->
+                <!-- CONCEPTUAL LAND SUBDIVISION PLAN STATUS -->
+                <div class="glass-panel rounded-2xl p-5">
+                    <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
+                    <div class="relative h-[220px] flex items-center justify-center">
+                        <canvas id="subdivisionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SELECTED SITE REPORT VIEWER & SPECIFICATIONS CARD -->
                 <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Report Link
+                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Drive Report Link
                             </h3>
-                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
+                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Specs</span>
                         </div>
                         <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
-                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full 10 key technical parameters and exact Drive/SharePoint PDF report link here.</p>
+                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full technical parameters and NBRI PDF report link here.</p>
                         </div>
                     </div>
                     <div id="report-card-action" class="mt-4">
@@ -380,19 +391,8 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- 2. CONCEPTUAL LAND SUBDIVISION PLAN STATUS -->
-                <div class="glass-panel rounded-2xl p-5">
-                    <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
-                        <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
-                    </h3>
-                    <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
-                    <div class="relative h-[210px] flex items-center justify-center">
-                        <canvas id="subdivisionChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- 3. HSPTD AI ASSISTANT CARD (PLACED AT THE LAST/BOTTOM) -->
-                <div class="glass-panel-glow rounded-2xl p-5 flex flex-col">
+                <!-- HSPTD AI ASSISTANT (MOVED TO BOTTOM AS REQUESTED) -->
+                <div class="glass-panel-glow rounded-2xl p-5 flex flex-col mt-auto">
                     <div class="flex items-center gap-2.5 mb-3">
                         <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white text-xs shadow-lg shadow-purple-500/20">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -406,7 +406,7 @@ html_template = """
                         <div class="flex gap-2">
                             <div class="w-6 h-6 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-[10px] text-white">AI</div>
                             <div class="bg-slate-900/90 text-slate-200 p-2.5 rounded-xl border border-slate-800">
-                                Ayubowan! Ask me about estate sites, report links, or district stats.
+                                Ayubowan! Ask me about estate sites, Google Drive report links, or district stats.
                             </div>
                         </div>
                     </div>
@@ -460,31 +460,20 @@ html_template = """
         function initMap() {
             mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([6.9, 80.6], 8);
             
-            // Esri World Navigation / Dark Gray Canvas High Quality Basemap
+            // ESRI WORLD NAVIGATION MAP / DARK GRAY CANVAS BASEMAP
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 16,
                 attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
             }).addTo(mapInstance);
 
+            // Esri Reference Labels overlay
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 16,
+                opacity: 0.7
+            }).addTo(mapInstance);
+
             markersGroup = L.layerGroup().addTo(mapInstance);
             districtHighlightLayer = L.layerGroup().addTo(mapInstance);
-        }
-
-        // Extracts hyperlinked Google Drive / SharePoint URL from cells or =HYPERLINK formula
-        function parseURLFromCell(cellVal) {
-            if (!cellVal) return '';
-            let val = cellVal.trim();
-            if (!val || val === '-') return '';
-            
-            // Match =HYPERLINK("url", "label") formula
-            const hyperlinkMatch = val.match(/HYPERLINK\s*\(\s*["']([^"']+)["']/i);
-            if (hyperlinkMatch && hyperlinkMatch[1]) return hyperlinkMatch[1];
-            
-            // Direct URL Match starting with http:// or https://
-            const urlMatch = val.match(/(https?:\/\/[^\s"']+)/i);
-            if (urlMatch && urlMatch[1]) return urlMatch[1];
-
-            return ''; // If only plain text like 'Mohomadi' is present without URL
         }
 
         function fetchCSVData() {
@@ -526,8 +515,9 @@ html_template = """
                 const droneSurvey = r['Drone Survey'] || 'Completed';
                 const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
                 
-                const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || '';
-                const reportLink = parseURLFromCell(reportLinkRaw);
+                // Extraction of actual Google Drive / SharePoint URL link from 'NBRI 1st Report - Link'
+                const reportLinkRaw = r['NBRI 1st Report - Link'] || r['NBRI 1st Report- Link'] || r['Report Link'] || '';
+                const reportLink = parseReportLink(reportLinkRaw);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
                 let lat = parseFloat(r['Lat'] || r['Latitude']) || (baseCoords.lat + (Math.random() - 0.5) * 0.12);
@@ -536,12 +526,24 @@ html_template = """
                 return { 
                     sno: idx + 1, region, district, estate, division, ia, units, 
                     reportIssued, reportYear, bodCompleted, perimeterSurvey, droneSurvey, 
-                    conceptualDesign, reportLink, lat, lng 
+                    conceptualDesign, reportLinkRaw, reportLink, lat, lng 
                 };
             });
 
             populateFilterDropdowns();
             applyFilters();
+        }
+
+        // Direct Drive / SharePoint URL Link Parser
+        function parseReportLink(rawText) {
+            if (!rawText || rawText.trim() === '' || rawText.trim() === '-') return '';
+            let cleaned = rawText.trim();
+            // If raw text is already a URL
+            if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
+            // Handle google sheet hyperlink formulas if present
+            const match = cleaned.match(/https?:\/\/[^\s"']+/);
+            if (match) return match[0];
+            return cleaned;
         }
 
         function populateFilterDropdowns() {
@@ -569,6 +571,7 @@ html_template = """
 
             updateKPIs();
             updateMapMarkers(districtVal);
+            updateDistrictBarChart();
             updateCharts();
             renderMainTable();
         }
@@ -597,20 +600,33 @@ html_template = """
 
             const districtTag = document.getElementById('district-tag');
 
-            if (selectedDistrict !== 'ALL' && districtCoordinates[selectedDistrict]) {
-                const coords = districtCoordinates[selectedDistrict];
+            // District Highlight Boundary Selection logic
+            if (selectedDistrict !== 'ALL') {
                 districtTag.classList.remove('hidden');
                 
-                L.circle([coords.lat, coords.lng], {
-                    color: '#38bdf8',
-                    fillColor: '#0284c7',
-                    fillOpacity: 0.22,
-                    radius: 14000,
-                    weight: 3,
-                    dashArray: '8, 8'
-                }).addTo(districtHighlightLayer);
+                // Get all points of selected district to highlight entire district cluster
+                const districtSites = filteredData.filter(d => d.district === selectedDistrict);
+                
+                if (districtSites.length > 0) {
+                    const lats = districtSites.map(d => d.lat);
+                    const lngs = districtSites.map(d => d.lng);
+                    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+                    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+                    const centerLat = (minLat + maxLat) / 2;
+                    const centerLng = (minLng + maxLng) / 2;
 
-                if (mapInstance) mapInstance.flyTo([coords.lat, coords.lng], 10, { duration: 1.2 });
+                    // Large boundary ring covering all sites in selected district
+                    L.circle([centerLat, centerLng], {
+                        color: '#38bdf8',
+                        fillColor: '#0284c7',
+                        fillOpacity: 0.15,
+                        radius: 18000,
+                        weight: 3,
+                        dashArray: '6, 6'
+                    }).addTo(districtHighlightLayer);
+
+                    if (mapInstance) mapInstance.flyTo([centerLat, centerLng], 10, { duration: 1.2 });
+                }
             } else {
                 districtTag.classList.add('hidden');
             }
@@ -632,9 +648,11 @@ html_template = """
 
                 const marker = L.marker([site.lat, site.lng], { icon: customIcon });
                 
-                let linkButton = site.reportLink 
-                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open Drive PDF Report</a>`
-                    : '<span class="text-[10px] text-amber-400/80 mt-1 block"><i class="fa-solid fa-link-slash mr-1"></i> No Direct Link Attached in Sheet</span>';
+                let linkButton = (site.reportLink && site.reportLink.startsWith('http')) 
+                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open NBRI PDF Report</a>`
+                    : site.reportLinkRaw 
+                        ? `<span class="text-[11px] text-cyan-400 font-semibold block mt-1"><i class="fa-solid fa-link mr-1"></i> ${site.reportLinkRaw}</span>`
+                        : '<span class="text-[10px] text-slate-400 mt-1 block">No direct PDF link attached</span>';
 
                 marker.bindPopup(`
                     <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
@@ -648,7 +666,7 @@ html_template = """
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>7. Drone Survey:</b> ${site.droneSurvey}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>8. Conceptual Subdivision:</b> ${site.conceptualDesign}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>9. BOD Clearance:</b> ${site.bodCompleted}</p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:4px 0 0 0;"><b>10. Report Document:</b></p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:4px 0 0 0;"><b>10. Report Link:</b></p>
                         ${linkButton}
                     </div>
                 `);
@@ -664,7 +682,7 @@ html_template = """
         }
 
         function initCharts() {
-            // 1. CONCEPTUAL SUBDIVISION DONUT CHART
+            // CONCEPTUAL SUBDIVISION PLAN CHART
             const ctxSub = document.getElementById('subdivisionChart').getContext('2d');
             subdivisionChartInstance = new Chart(ctxSub, {
                 type: 'doughnut',
@@ -672,9 +690,8 @@ html_template = """
                     labels: ['Completed', 'In Progress', 'Not Required', 'Pending'],
                     datasets: [{
                         data: [0, 0, 0, 0],
-                        backgroundColor: '#080a14',
-                        borderColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
-                        borderWidth: 3,
+                        backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 0,
                         hoverOffset: 6
                     }]
                 },
@@ -691,52 +708,60 @@ html_template = """
                 }
             });
 
-            // 2. DISTRICT-WISE HOUSING UNIT DISTRIBUTION HORIZONTAL BAR CHART
-            const ctxDist = document.getElementById('districtBarChart').getContext('2d');
-            districtBarChartInstance = new Chart(ctxDist, {
+            // DISTRICT VISUAL BAR CHART
+            const ctxBar = document.getElementById('districtBarChart').getContext('2d');
+            districtBarChartInstance = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'Planned Housing Units',
+                        label: 'Total Housing Units',
                         data: [],
-                        backgroundColor: 'rgba(6, 182, 212, 0.65)',
-                        borderColor: '#06b6d4',
-                        borderWidth: 1.5,
-                        borderRadius: 8
+                        backgroundColor: '#06b6d4',
+                        borderColor: '#38bdf8',
+                        borderWidth: 1,
+                        borderRadius: 6
                     }]
                 },
                 options: {
-                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` Housing Units: ${context.parsed.x.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
                     scales: {
                         x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                            ticks: { color: '#94a3b8', font: { size: 11 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
                         },
                         y: {
-                            grid: { display: false },
-                            ticks: { color: '#f8fafc', font: { size: 11, weight: 'bold' } }
+                            ticks: { color: '#94a3b8', font: { size: 11 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.08)' }
                         }
+                    },
+                    plugins: {
+                        legend: { display: false }
                     }
                 }
             });
         }
 
+        function updateDistrictBarChart() {
+            const districtMap = {};
+            filteredData.forEach(item => {
+                const dist = item.district || 'Unassigned';
+                if (!districtMap[dist]) districtMap[dist] = 0;
+                districtMap[dist] += item.units;
+            });
+
+            const labels = Object.keys(districtMap);
+            const dataValues = Object.values(districtMap);
+
+            districtBarChartInstance.data.labels = labels;
+            districtBarChartInstance.data.datasets[0].data = dataValues;
+            districtBarChartInstance.update();
+        }
+
         function updateCharts() {
-            // Update Donut Chart
             let completed = 0, inProgress = 0, notRequired = 0, pending = 0;
+
             filteredData.forEach(item => {
                 const status = (item.conceptualDesign || '').toLowerCase();
                 if (status.includes('completed')) completed++;
@@ -747,22 +772,6 @@ html_template = """
 
             subdivisionChartInstance.data.datasets[0].data = [completed, inProgress, notRequired, pending];
             subdivisionChartInstance.update();
-
-            // Update District Bar Chart
-            const districtMap = {};
-            filteredData.forEach(item => {
-                const dist = item.district || 'Unassigned';
-                if (!districtMap[dist]) districtMap[dist] = 0;
-                districtMap[dist] += item.units;
-            });
-
-            const sortedDistricts = Object.keys(districtMap)
-                .map(d => ({ district: d, units: districtMap[d] }))
-                .sort((a, b) => b.units - a.units);
-
-            districtBarChartInstance.data.labels = sortedDistricts.map(d => d.district);
-            districtBarChartInstance.data.datasets[0].data = sortedDistricts.map(d => d.units);
-            districtBarChartInstance.update();
         }
 
         function renderMainTable() {
@@ -776,9 +785,11 @@ html_template = """
                 
                 tr.onclick = () => selectSiteRow(row);
 
-                let reportLinkHTML = row.reportLink 
-                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40 border border-cyan-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
-                    : `<span class="text-slate-600 text-[10px]">N/A</span>`;
+                let reportLinkHTML = (row.reportLink && row.reportLink.startsWith('http')) 
+                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40 border border-cyan-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Report</a>`
+                    : row.reportLinkRaw 
+                        ? `<span class="text-cyan-400 font-mono text-[11px]">${row.reportLinkRaw}</span>`
+                        : `<span class="text-slate-600 text-[10px]">N/A</span>`;
 
                 tr.innerHTML = `
                     <td class="py-3 px-3 font-mono text-slate-400">${row.sno}</td>
@@ -795,7 +806,6 @@ html_template = """
             });
         }
 
-        // Populates Selected Site Card with 10 Key Details
         function selectSiteRow(site) {
             if (mapInstance && site.lat && site.lng) {
                 mapInstance.setView([site.lat, site.lng], 13);
@@ -822,16 +832,16 @@ html_template = """
                 </div>
             `;
 
-            if (site.reportLink) {
+            if (site.reportLink && site.reportLink.startsWith('http')) {
                 action.innerHTML = `
                     <a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition">
-                        <i class="fa-solid fa-file-pdf"></i> Open Official Drive PDF Report
+                        <i class="fa-solid fa-file-pdf"></i> Open Official NBRI PDF Report
                     </a>
                 `;
             } else {
                 action.innerHTML = `
                     <button disabled class="w-full py-2.5 bg-slate-800 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
-                        <i class="fa-solid fa-circle-exclamation"></i> No PDF Link Attached in Sheet
+                        <i class="fa-solid fa-circle-exclamation"></i> No PDF Link Attached
                     </button>
                 `;
             }
