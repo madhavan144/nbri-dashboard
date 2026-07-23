@@ -1,8 +1,7 @@
-import streamlit as st
-import streamlit.components.v1 as components
-from PIL import Image
+import streamlit as st  # type: ignore[import-not-found]
+import streamlit.components.v1 as components  # type: ignore[import-not-found]
 # 1. Page Configuration (Full Screen)
-logo_image = Image.open("nbro-logo.png")
+logo_image = "nbro-logo.png"
 st.set_page_config(
     page_title="NBRI - IHP Progress Dashboard",
     page_icon=logo_image,
