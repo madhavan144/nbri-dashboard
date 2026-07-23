@@ -1,5 +1,5 @@
-import streamlit as st # type: ignore[import-not-found]
-import streamlit.components.v1 as components # type: ignore[import-not-found]
+import streamlit as st
+import streamlit.components.v1 as components
 
 # 1. Page Configuration
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
@@ -292,12 +292,12 @@ html_template = """
             <!-- LEFT 8 COLS -->
             <div class="lg:col-span-8 flex flex-col gap-6">
                 
-                <!-- GIS MAP -->
+                <!-- GIS MAP WITH ESRI WORLD NAVIGATION DARK BLUE CANVAS BASEMAP -->
                 <div class="glass-panel rounded-2xl p-5 relative flex flex-col">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
                             <div class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></div>
-                            <h3 class="text-base font-bold text-white">Interactive GIS Site Location Map</h3>
+                            <h3 class="text-base font-bold text-white">Interactive GIS Site Location Map (Esri Dark Navigation)</h3>
                         </div>
                         <span id="district-tag" class="hidden text-xs px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-500/10 font-medium">
                             <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> Highlighted District Focused
@@ -308,35 +308,22 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION TABLE (Replaces Barchart) -->
+                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION VISUAL BAR CHART -->
                 <div class="glass-panel rounded-2xl p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-list-ol text-cyan-400 text-sm"></i> District-wise Housing Unit Distribution
+                                <i class="fa-solid fa-chart-column text-cyan-400 text-sm"></i> District-wise Housing Unit Distribution Visual
                             </h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Live aggregated totals per district computed directly from tracker spreadsheet</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Graphical visualization of planned resettlement capacity per district</p>
                         </div>
                         <span class="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
-                            <i class="fa-solid fa-sync mr-1"></i> Auto-Calculated
+                            <i class="fa-solid fa-chart-pie mr-1"></i> Dynamic Chart
                         </span>
                     </div>
                     
-                    <div class="max-h-[280px] overflow-y-auto border border-slate-800/90 rounded-xl">
-                        <table class="w-full text-left text-xs text-slate-300">
-                            <thead class="bg-slate-900/95 sticky top-0 z-20 text-slate-400 font-semibold uppercase border-b border-slate-800">
-                                <tr>
-                                    <th class="py-3 px-4">#</th>
-                                    <th class="py-3 px-4">District</th>
-                                    <th class="py-3 px-4 text-center">No. of Sites</th>
-                                    <th class="py-3 px-4 text-right">Housing Units</th>
-                                    <th class="py-3 px-4 text-center">Distribution Share</th>
-                                </tr>
-                            </thead>
-                            <tbody id="district-summary-body" class="divide-y divide-slate-800/60 font-medium">
-                                <!-- Populated dynamically by JavaScript -->
-                            </tbody>
-                        </table>
+                    <div class="relative h-[280px] w-full p-2">
+                        <canvas id="districtBarChart"></canvas>
                     </div>
                 </div>
 
@@ -370,21 +357,41 @@ html_template = """
                 </div>
             </div>
 
-            <!-- RIGHT 4 COLS -->
+            <!-- RIGHT 4 COLS (ORDER FIX: Site Info -> Chart -> AI Assistant at bottom) -->
             <div class="lg:col-span-4 flex flex-col gap-6">
                 
-                <!-- CONCEPTUAL LAND SUBDIVISION PLAN STATUS (Replaces Pie Chart) -->
+                <!-- 1. SELECTED SITE REPORT VIEWER & 10 KEY DETAILS CARD -->
+                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Report Link
+                            </h3>
+                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
+                        </div>
+                        <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
+                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full 10 key technical parameters and exact Drive/SharePoint PDF report link here.</p>
+                        </div>
+                    </div>
+                    <div id="report-card-action" class="mt-4">
+                        <button disabled class="w-full py-2.5 bg-slate-800/80 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Select a Site to Open Official Link
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. CONCEPTUAL LAND SUBDIVISION PLAN STATUS -->
                 <div class="glass-panel rounded-2xl p-5">
                     <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
                         <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
                     </h3>
                     <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
-                    <div class="relative h-[220px] flex items-center justify-center">
+                    <div class="relative h-[210px] flex items-center justify-center">
                         <canvas id="subdivisionChart"></canvas>
                     </div>
                 </div>
 
-                <!-- AI ASSISTANT -->
+                <!-- 3. HSPTD AI ASSISTANT CARD (PLACED AT THE LAST/BOTTOM) -->
                 <div class="glass-panel-glow rounded-2xl p-5 flex flex-col">
                     <div class="flex items-center gap-2.5 mb-3">
                         <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white text-xs shadow-lg shadow-purple-500/20">
@@ -411,26 +418,6 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- SELECTED SITE REPORT VIEWER & 10 KEY DETAILS CARD -->
-                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Report Link
-                            </h3>
-                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
-                        </div>
-                        <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
-                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full 10 key technical parameters and NBRI PDF report link here.</p>
-                        </div>
-                    </div>
-                    <div id="report-card-action" class="mt-4">
-                        <button disabled class="w-full py-2.5 bg-slate-800/80 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Select a Site to Open Official Link
-                        </button>
-                    </div>
-                </div>
-
             </div>
         </div>
     </main>
@@ -445,6 +432,7 @@ html_template = """
         let markersGroup = null;
         let districtHighlightLayer = null;
         let subdivisionChartInstance = null;
+        let districtBarChartInstance = null;
 
         const districtCoordinates = {
             "Rathnapura": { lat: 6.6828, lng: 80.3992 },
@@ -472,14 +460,31 @@ html_template = """
         function initMap() {
             mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([6.9, 80.6], 8);
             
-            // MapTiler / Carto Dark Basemap Tile Layer
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 18,
-                subdomains: 'abcd'
+            // Esri World Navigation / Dark Gray Canvas High Quality Basemap
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 16,
+                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
             }).addTo(mapInstance);
 
             markersGroup = L.layerGroup().addTo(mapInstance);
             districtHighlightLayer = L.layerGroup().addTo(mapInstance);
+        }
+
+        // Extracts hyperlinked Google Drive / SharePoint URL from cells or =HYPERLINK formula
+        function parseURLFromCell(cellVal) {
+            if (!cellVal) return '';
+            let val = cellVal.trim();
+            if (!val || val === '-') return '';
+            
+            // Match =HYPERLINK("url", "label") formula
+            const hyperlinkMatch = val.match(/HYPERLINK\s*\(\s*["']([^"']+)["']/i);
+            if (hyperlinkMatch && hyperlinkMatch[1]) return hyperlinkMatch[1];
+            
+            // Direct URL Match starting with http:// or https://
+            const urlMatch = val.match(/(https?:\/\/[^\s"']+)/i);
+            if (urlMatch && urlMatch[1]) return urlMatch[1];
+
+            return ''; // If only plain text like 'Mohomadi' is present without URL
         }
 
         function fetchCSVData() {
@@ -522,7 +527,7 @@ html_template = """
                 const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
                 
                 const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || '';
-                const reportLink = formatReportURL(reportLinkRaw, estate);
+                const reportLink = parseURLFromCell(reportLinkRaw);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
                 let lat = parseFloat(r['Lat'] || r['Latitude']) || (baseCoords.lat + (Math.random() - 0.5) * 0.12);
@@ -531,21 +536,12 @@ html_template = """
                 return { 
                     sno: idx + 1, region, district, estate, division, ia, units, 
                     reportIssued, reportYear, bodCompleted, perimeterSurvey, droneSurvey, 
-                    conceptualDesign, reportLinkRaw, reportLink, lat, lng 
+                    conceptualDesign, reportLink, lat, lng 
                 };
             });
 
             populateFilterDropdowns();
             applyFilters();
-        }
-
-        // Safe URL Formatter to prevent target="_top" dashboard resets
-        function formatReportURL(rawLink, estateName) {
-            if (!rawLink || rawLink.trim() === '' || rawLink.trim() === '-') return '';
-            let cleaned = rawLink.trim();
-            if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
-            // If text link name, create external direct drive/search lookup link
-            return `https://www.google.com/search?q=NBRI+Report+${encodeURIComponent(cleaned)}+${encodeURIComponent(estateName)}`;
         }
 
         function populateFilterDropdowns() {
@@ -573,7 +569,6 @@ html_template = """
 
             updateKPIs();
             updateMapMarkers(districtVal);
-            renderDistrictSummaryTable();
             updateCharts();
             renderMainTable();
         }
@@ -596,64 +591,12 @@ html_template = """
             document.getElementById('kpi-bod-pct').textContent = `${bodPct}%`;
         }
 
-        // Render District Summary Table (Replaces Bar Chart)
-        function renderDistrictSummaryTable() {
-            const summaryBody = document.getElementById('district-summary-body');
-            summaryBody.innerHTML = '';
-
-            const districtMap = {};
-            filteredData.forEach(item => {
-                const dist = item.district || 'Unassigned';
-                if (!districtMap[dist]) districtMap[dist] = { sites: 0, units: 0 };
-                districtMap[dist].sites += 1;
-                districtMap[dist].units += item.units;
-            });
-
-            const sortedDistricts = Object.keys(districtMap)
-                .map(d => ({ district: d, ...districtMap[d] }))
-                .sort((a, b) => b.units - a.units);
-
-            const totalUnitsAll = sortedDistricts.reduce((a, c) => a + c.units, 0);
-
-            sortedDistricts.forEach((row, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
-                
-                // Clicking district row filters map to that district
-                tr.onclick = () => {
-                    document.getElementById('filter-district').value = row.district;
-                    applyFilters();
-                };
-
-                const pct = totalUnitsAll > 0 ? Math.round((row.units / totalUnitsAll) * 100) : 0;
-
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-mono text-slate-400 text-xs">${idx + 1}</td>
-                    <td class="py-3 px-4 font-bold text-white text-xs flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span> ${row.district}
-                    </td>
-                    <td class="py-3 px-4 text-center font-semibold text-slate-300 text-xs">${row.sites}</td>
-                    <td class="py-3 px-4 text-right font-extrabold text-emerald-400 text-xs">${row.units.toLocaleString()}</td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <div class="w-20 bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                                <div class="bg-cyan-400 h-full" style="width: ${pct}%"></div>
-                            </div>
-                            <span class="text-[10px] text-slate-400 font-mono">${pct}%</span>
-                        </div>
-                    </td>
-                `;
-                summaryBody.appendChild(tr);
-            });
-        }
-
         function updateMapMarkers(selectedDistrict) {
             markersGroup.clearLayers();
             districtHighlightLayer.clearLayers();
 
             const districtTag = document.getElementById('district-tag');
 
-            // Highlight Selected District with Blue Glow Ring & Auto-Fly
             if (selectedDistrict !== 'ALL' && districtCoordinates[selectedDistrict]) {
                 const coords = districtCoordinates[selectedDistrict];
                 districtTag.classList.remove('hidden');
@@ -690,10 +633,9 @@ html_template = """
                 const marker = L.marker([site.lat, site.lng], { icon: customIcon });
                 
                 let linkButton = site.reportLink 
-                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open NBRI PDF Report</a>`
-                    : '<span class="text-[10px] text-slate-400 mt-1 block">No direct PDF link attached</span>';
+                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open Drive PDF Report</a>`
+                    : '<span class="text-[10px] text-amber-400/80 mt-1 block"><i class="fa-solid fa-link-slash mr-1"></i> No Direct Link Attached in Sheet</span>';
 
-                // Popup displaying 10 Key Site Specs
                 marker.bindPopup(`
                     <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
                         <h4 style="font-weight:700; color:#38bdf8; font-size:14px; margin-bottom:6px;">${site.estate}</h4>
@@ -722,7 +664,7 @@ html_template = """
         }
 
         function initCharts() {
-            // CONCEPTUAL SUBDIVISION PLAN CHART (Replaces Pie Chart)
+            // 1. CONCEPTUAL SUBDIVISION DONUT CHART
             const ctxSub = document.getElementById('subdivisionChart').getContext('2d');
             subdivisionChartInstance = new Chart(ctxSub, {
                 type: 'doughnut',
@@ -730,8 +672,9 @@ html_template = """
                     labels: ['Completed', 'In Progress', 'Not Required', 'Pending'],
                     datasets: [{
                         data: [0, 0, 0, 0],
-                        backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
-                        borderWidth: 0,
+                        backgroundColor: '#080a14',
+                        borderColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 3,
                         hoverOffset: 6
                     }]
                 },
@@ -747,11 +690,53 @@ html_template = """
                     }
                 }
             });
+
+            // 2. DISTRICT-WISE HOUSING UNIT DISTRIBUTION HORIZONTAL BAR CHART
+            const ctxDist = document.getElementById('districtBarChart').getContext('2d');
+            districtBarChartInstance = new Chart(ctxDist, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Planned Housing Units',
+                        data: [],
+                        backgroundColor: 'rgba(6, 182, 212, 0.65)',
+                        borderColor: '#06b6d4',
+                        borderWidth: 1.5,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Housing Units: ${context.parsed.x.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#f8fafc', font: { size: 11, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
         }
 
         function updateCharts() {
+            // Update Donut Chart
             let completed = 0, inProgress = 0, notRequired = 0, pending = 0;
-
             filteredData.forEach(item => {
                 const status = (item.conceptualDesign || '').toLowerCase();
                 if (status.includes('completed')) completed++;
@@ -762,6 +747,22 @@ html_template = """
 
             subdivisionChartInstance.data.datasets[0].data = [completed, inProgress, notRequired, pending];
             subdivisionChartInstance.update();
+
+            // Update District Bar Chart
+            const districtMap = {};
+            filteredData.forEach(item => {
+                const dist = item.district || 'Unassigned';
+                if (!districtMap[dist]) districtMap[dist] = 0;
+                districtMap[dist] += item.units;
+            });
+
+            const sortedDistricts = Object.keys(districtMap)
+                .map(d => ({ district: d, units: districtMap[d] }))
+                .sort((a, b) => b.units - a.units);
+
+            districtBarChartInstance.data.labels = sortedDistricts.map(d => d.district);
+            districtBarChartInstance.data.datasets[0].data = sortedDistricts.map(d => d.units);
+            districtBarChartInstance.update();
         }
 
         function renderMainTable() {
@@ -794,7 +795,7 @@ html_template = """
             });
         }
 
-        // Populates the Selected Site Viewer Panel with 10 Key Details
+        // Populates Selected Site Card with 10 Key Details
         function selectSiteRow(site) {
             if (mapInstance && site.lat && site.lng) {
                 mapInstance.setView([site.lat, site.lng], 13);
@@ -824,13 +825,13 @@ html_template = """
             if (site.reportLink) {
                 action.innerHTML = `
                     <a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition">
-                        <i class="fa-solid fa-file-pdf"></i> Open Official NBRI PDF Report
+                        <i class="fa-solid fa-file-pdf"></i> Open Official Drive PDF Report
                     </a>
                 `;
             } else {
                 action.innerHTML = `
                     <button disabled class="w-full py-2.5 bg-slate-800 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
-                        <i class="fa-solid fa-circle-exclamation"></i> No PDF Link Attached
+                        <i class="fa-solid fa-circle-exclamation"></i> No PDF Link Attached in Sheet
                     </button>
                 `;
             }
