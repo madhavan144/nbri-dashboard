@@ -1,5 +1,6 @@
 import streamlit as st  # type: ignore[import-not-found]
 import streamlit.components.v1 as components  # type: ignore[import-not-found]
+from PIL import Image
 # 1. Page Configuration (Full Screen)
 logo_image = "nbro-logo.png"
 st.set_page_config(
@@ -35,7 +36,7 @@ html_dashboard = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBRO - LIRIS Progress & Resettlement Dashboard</title>
+    <title>NBRI - IHP 4700 Resettlement & Progress Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -173,12 +174,12 @@ html_dashboard = """
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold tracking-tight text-white">NBRO - LIRIS Dashboard</h1>
+                        <h1 class="text-xl font-bold tracking-tight text-white">NBRI - IHP PROGRESS Dashboard</h1>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Sync
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400">Landslide Hazard Information & Housing Resettlement Monitoring System</p>
+                    <p class="text-xs text-slate-400">Resettlement of 4700 Families in the Estate Sector Under the Indian Housing Project (IHP)</p>
                 </div>
             </div>
 
