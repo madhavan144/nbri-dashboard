@@ -175,11 +175,7 @@ if not st.session_state.authenticated:
 # ==========================================
 # 2d. LIVE SHEET-UPDATE NOTIFICATIONS
 # ==========================================
-# NOTE: Source moved from a published Google Sheet CSV to a SharePoint Excel workbook.
-# The share link only works here if it is set to "Anyone with the link can view" -
-# a link that requires NBRO sign-in will fail to load in the browser/server fetch below.
-SHAREPOINT_SHEET_VIEW_URL = "https://nbrosl-my.sharepoint.com/:x:/g/personal/resettlement_nbri_gov_lk/IQBFwJPduu3dR7dbiiPYf_91AbXE4khDCG0F9EFyoUKmulc?rtime=T3tVpmvp3kg"
-SHEET_CSV_URL = SHAREPOINT_SHEET_VIEW_URL.split("?")[0] + "?download=1"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGEDtnF-wjT39hcvY3tkA_PpRO1FM06-M267dOBvKYGYlgD-udcevC8LrWGjM_XA/pub?gid=143716875&single=true&output=csv"
 
 # Columns that count as "important" when they change for an existing site
 WATCHED_FIELDS = [
@@ -190,43 +186,26 @@ WATCHED_FIELDS = [
 ]
 
 def fetch_sheet_rows():
-    """Downloads the SharePoint Excel workbook and parses its first sheet into a list of
-    dict rows (header row -> keys), or returns None on failure (including missing
-    openpyxl, or a link that requires sign-in and returns an HTML login page instead
-    of the workbook)."""
+    """Downloads and parses the published Google Sheet CSV. Returns a list of dict rows, or None on failure."""
     try:
         req = urllib.request.Request(SHEET_CSV_URL, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            raw_bytes = resp.read()
-        try:
-            from openpyxl import load_workbook
-        except ImportError:
-            return None
-        wb = load_workbook(io.BytesIO(raw_bytes), data_only=True)
-        ws = wb.active
-        rows_iter = ws.iter_rows(values_only=True)
-        headers = next(rows_iter, None)
-        if not headers:
-            return None
-        headers = [("" if h is None else str(h).strip()) for h in headers]
-        rows = []
-        for values in rows_iter:
-            row = {headers[i]: ("" if values[i] is None else values[i]) for i in range(min(len(headers), len(values)))}
-            rows.append(row)
-        return rows
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            raw = resp.read().decode("utf-8", errors="ignore")
+        reader = csv.DictReader(io.StringIO(raw))
+        return list(reader)
     except Exception:
         return None
 
 def row_key(row):
-    district = str(row.get("District") or row.get("district") or "").strip()
-    estate = str(row.get("Estate") or row.get("estate") or "").strip()
-    division = str(row.get("Division") or row.get("division") or "").strip()
+    district = (row.get("District") or row.get("district") or "").strip()
+    estate = (row.get("Estate") or row.get("estate") or "").strip()
+    division = (row.get("Division") or row.get("division") or "").strip()
     return f"{district}|{estate}|{division}"
 
 def watched_value(row, field_name):
     for key in field_name:
         if key in row:
-            return str(row.get(key) or "").strip()
+            return (row.get(key) or "").strip()
     return ""
 
 def get_field_variants(field_label):
@@ -256,7 +235,7 @@ def check_for_sheet_updates(silent_baseline=False):
         new_snapshot[key] = watched
 
         old_watched = st.session_state.sheet_snapshot.get(key)
-        estate_name = str(row.get("Estate") or row.get("estate") or "Site").strip()
+        estate_name = (row.get("Estate") or row.get("estate") or "Site").strip()
 
         if old_watched is None:
             if not silent_baseline:
@@ -310,8 +289,8 @@ html_template = """
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS for Live Excel (.xlsx) Parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- PapaParse for Live CSV Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -384,39 +363,39 @@ html_template = """
             box-shadow: 0 0 10px #64748b, 0 0 20px #64748b;
             animation: pulse-slate 2s infinite;
         }
-        /* Stage 1: NBRI 1st Report Issued only - Dark Blue */
+        /* Stage 1: NBRI 1st Report Issued only */
         .glowing-pin.stage-1 {
-            background: #1d4ed8;
-            box-shadow: 0 0 10px #1d4ed8, 0 0 20px #1d4ed8;
-            animation: pulse-stage1 2s infinite;
+            background: #06b6d4;
+            box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
+            animation: pulse-cyan 2s infinite;
         }
-        /* Stage 2: NBRI 1st Report Issued + BOD Completed - Light Blue */
+        /* Stage 2: NBRI 1st Report Issued + BOD Completed */
         .glowing-pin.stage-2 {
-            background: #38bdf8;
-            box-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;
-            animation: pulse-stage2 2s infinite;
+            background: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
+            animation: pulse-blue 2s infinite;
         }
-        /* Stage 3: NBRI 1st Report Issued + BOD Completed + NBRI 2nd Report Issued - Gold/Yellow */
+        /* Stage 3: NBRI 1st Report Issued + BOD Completed + NBRI 2nd Report Issued */
         .glowing-pin.stage-3 {
-            background: #eab308;
-            box-shadow: 0 0 10px #eab308, 0 0 20px #eab308;
-            animation: pulse-stage3 2s infinite;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+            animation: pulse-green 2s infinite;
         }
 
-        @keyframes pulse-stage1 {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(29, 78, 216, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
+        @keyframes pulse-cyan {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
         }
-        @keyframes pulse-stage2 {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(56, 189, 248, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        @keyframes pulse-blue {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
-        @keyframes pulse-stage3 {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(234, 179, 8, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
         @keyframes pulse-slate {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(100, 116, 139, 0.8); }
@@ -568,7 +547,6 @@ html_template = """
                 <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
                     <div id="kpi-report-bar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full w-0 transition-all duration-700"></div>
                 </div>
-                <p id="kpi-report-units" class="text-[11px] text-slate-500 mt-2">NBRI 1st Report - Units: 0</p>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/40 transition">
@@ -583,7 +561,6 @@ html_template = """
                     <span id="kpi-conceptual-pct" class="text-xs text-indigo-400 font-semibold">--%</span>
                 </div>
                 <p id="kpi-conceptual-detail" class="text-[11px] text-slate-500 mt-2">Conceptual subdivision layout status</p>
-                <p id="kpi-conceptual-units" class="text-[11px] text-slate-500 mt-1">NBRI Conceptual Design - Units: 0</p>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/40 transition">
@@ -598,7 +575,6 @@ html_template = """
                     <span id="kpi-bod-pct" class="text-xs text-emerald-400 font-semibold">--%</span>
                 </div>
                 <p class="text-[11px] text-slate-500 mt-2">Clearance & construction handovers</p>
-                <p id="kpi-bod-units" class="text-[11px] text-slate-500 mt-1">BOD Marked on Ground: 0</p>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-amber-500/40 transition">
@@ -615,7 +591,6 @@ html_template = """
                 <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
                     <div id="kpi-report2-bar" class="bg-gradient-to-r from-amber-500 to-orange-500 h-full w-0 transition-all duration-700"></div>
                 </div>
-                <p id="kpi-report2-units" class="text-[11px] text-slate-500 mt-2">NBRI 2nd Report - Units: 0</p>
             </div>
         </section>
 
@@ -638,9 +613,9 @@ html_template = """
                     </div>
                     <div class="flex flex-wrap items-center gap-3 mb-3 text-[11px] text-slate-300">
                         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#64748b;"></span> No Reports Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#1d4ed8;"></span> NBRI 1st Report Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#38bdf8;"></span> NBRI 1st Report Issued + BOD Completed</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#eab308;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#06b6d4;"></span> NBRI 1st Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#3b82f6;"></span> NBRI 1st Report Issued + BOD Completed</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#10b981;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
                     </div>
                     <div class="w-full h-[450px] rounded-xl overflow-hidden relative border border-slate-800 shadow-2xl" id="map-container">
                         <div id="map" class="w-full h-full z-10"></div>
@@ -667,19 +642,12 @@ html_template = """
                 </div>
 
                 <!-- MAIN SITE DETAILS TABLE -->
-                <div class="glass-panel rounded-2xl p-5">
-                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div class="glass-panel rounded-2xl p-5 overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
                             <i class="fa-solid fa-table-cells text-purple-400 text-sm"></i> Resettlement Site Details Registry
                         </h3>
-                        <div class="flex items-center gap-3">
-                            <div class="relative w-56">
-                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                <input type="text" id="registry-search" autocomplete="off" placeholder="Search site or location..." class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-4 py-2 rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none placeholder-slate-500">
-                                <div id="registry-search-results" class="hidden absolute z-30 top-full left-0 right-0 mt-1.5 bg-slate-900/98 border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto"></div>
-                            </div>
-                            <div class="text-xs text-slate-400 whitespace-nowrap" id="table-count">Showing 0 sites</div>
-                        </div>
+                        <div class="text-xs text-slate-400" id="table-count">Showing 0 sites</div>
                     </div>
                     
                     <div class="max-h-[380px] overflow-y-auto pr-1 border border-slate-800/80 rounded-xl">
@@ -739,45 +707,47 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- HSPTD AI ASSISTANT (placed directly below Conceptual Land Subdivision Layout) -->
-                <div class="glass-panel-glow rounded-2xl p-6 flex flex-col shadow-2xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-sm shadow-lg shadow-purple-500/30">
-                                <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                    HSPTD AI Assistant
-                                    <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">Smart Query Engine</span>
-                                </h3>
-                                <p class="text-xs text-purple-300">Ask any query regarding estate resettlement, report links, or district statistics</p>
-                            </div>
-                        </div>
-                        <button onclick="clearAIChat()" class="text-xs text-slate-400 hover:text-slate-200 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 transition">
-                            <i class="fa-solid fa-trash-can mr-1"></i> Clear Chat
-                        </button>
-                    </div>
+            </div>
+        </div>
 
-                    <div id="ai-chat-box" class="h-[220px] overflow-y-auto space-y-3 p-4 bg-slate-950/90 rounded-xl border border-slate-800/90 text-xs mb-4 scroll-smooth">
-                        <div class="flex gap-3">
-                            <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold shadow-md shadow-purple-500/20">AI</div>
-                            <div class="bg-slate-900/90 text-slate-200 p-3 rounded-2xl border border-slate-800 max-w-[85%] leading-relaxed">
-                                <strong>Ayubowan!</strong> Welcome to the HSPTD AI Assistant. Ask me anything about estate site locations, district breakdown, BOD clearances, or direct report links in the drive!
-                            </div>
+        <!-- BOTTOM SECTION: HSPTD AI ASSISTANT -->
+        <section class="mt-8">
+            <div class="glass-panel-glow rounded-2xl p-6 flex flex-col shadow-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-sm shadow-lg shadow-purple-500/30">
+                            <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                HSPTD AI Assistant
+                                <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">Smart Query Engine</span>
+                            </h3>
+                            <p class="text-xs text-purple-300">Ask any query regarding estate resettlement, report links, or district statistics</p>
                         </div>
                     </div>
+                    <button onclick="clearAIChat()" class="text-xs text-slate-400 hover:text-slate-200 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Clear Chat
+                    </button>
+                </div>
 
-                    <div class="relative flex items-center">
-                        <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Type your query..." class="w-full bg-slate-900/95 text-xs text-slate-200 pl-4 pr-12 py-3 rounded-xl border border-slate-700/80 focus:border-purple-500 focus:outline-none shadow-inner placeholder-slate-500">
-                        <button onclick="sendAIMessage()" class="absolute right-3 text-purple-400 hover:text-purple-300 p-2 transition transform active:scale-95">
-                            <i class="fa-solid fa-paper-plane text-sm"></i>
-                        </button>
+                <div id="ai-chat-box" class="h-[220px] overflow-y-auto space-y-3 p-4 bg-slate-950/90 rounded-xl border border-slate-800/90 text-xs mb-4 scroll-smooth">
+                    <div class="flex gap-3">
+                        <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold shadow-md shadow-purple-500/20">AI</div>
+                        <div class="bg-slate-900/90 text-slate-200 p-3 rounded-2xl border border-slate-800 max-w-[85%] leading-relaxed">
+                            <strong>Ayubowan!</strong> Welcome to the HSPTD AI Assistant. Ask me anything about estate site locations, district breakdown, BOD clearances, or direct report links in the drive!
+                        </div>
                     </div>
                 </div>
 
+                <div class="relative flex items-center">
+                    <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Type your query (e.g., 'Show details for Niriella', 'Which district has highest housing units?')..." class="w-full bg-slate-900/95 text-xs text-slate-200 pl-4 pr-12 py-3 rounded-xl border border-slate-700/80 focus:border-purple-500 focus:outline-none shadow-inner placeholder-slate-500">
+                    <button onclick="sendAIMessage()" class="absolute right-3 text-purple-400 hover:text-purple-300 p-2 transition transform active:scale-95">
+                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                    </button>
+                </div>
             </div>
-        </div>
+        </section>
 
     </main>
 
@@ -785,10 +755,8 @@ html_template = """
         // Currently logged-in user, injected server-side, used to attribute discussion comments
         window.currentUser = { name: "{{CURRENT_USER}}" };
 
-        // Live source: SharePoint Excel workbook, converted to a direct-download link.
-        // This only works if the file is shared as "Anyone with the link can view" -
-        // a sign-in-only link will fail this fetch (browser gets a login page instead of the file).
-        const DEFAULT_CSV_URL = "https://nbrosl-my.sharepoint.com/:x:/g/personal/resettlement_nbri_gov_lk/IQBFwJPduu3dR7dbiiPYf_91AbXE4khDCG0F9EFyoUKmulc?download=1";
+        // Live Google Sheets published CSV URL
+        const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGEDtnF-wjT39hcvY3tkA_PpRO1FM06-M267dOBvKYGYlgD-udcevC8LrWGjM_XA/pub?gid=143716875&single=true&output=csv";
 
         // Locally uploaded district boundary GeoJSON, embedded server-side by app.py (falls back to remote if not present)
         const LOCAL_DISTRICT_GEOJSON = {{DISTRICT_GEOJSON}};
@@ -799,7 +767,6 @@ html_template = """
 
         let rawData = [];
         let filteredData = [];
-        let registrySearchTerm = '';
         let mapInstance = null;
         let markersGroup = null;
         let districtGeoJsonLayer = null;
@@ -936,70 +903,46 @@ html_template = """
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.add('fa-spin');
 
-            fetch(DEFAULT_CSV_URL)
-                .then(res => {
-                    if (!res.ok) throw new Error('Sheet fetch failed with status ' + res.status);
-                    return res.arrayBuffer();
-                })
-                .then(buffer => {
-                    const workbook = XLSX.read(buffer, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[firstSheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+            Papa.parse(DEFAULT_CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
-                    if (rows && rows.length > 0) {
-                        processCSVRows(rows);
+                    if (results.data && results.data.length > 0) {
+                        processCSVRows(results.data);
                     }
-                })
-                .catch(err => {
+                },
+                error: function() {
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
-                    // Common cause: the SharePoint link isn't shared as "Anyone with the link can view",
-                    // so the fetch returns a login page instead of the workbook.
-                    console.log('Sheet load error (check SharePoint sharing permissions):', err);
-                });
-        }
-
-        function parseUnitsValue(raw) {
-            if (raw === undefined || raw === null) return 0;
-            const cleaned = String(raw).replace(/[^0-9]/g, '');
-            return parseInt(cleaned) || 0;
-        }
-
-        // xlsx cells can come back as numbers/dates rather than strings (unlike the old CSV
-        // parser), so string fields are coerced through this before .trim()/comparisons.
-        function toStr(raw) {
-            if (raw === undefined || raw === null) return '';
-            return String(raw).trim();
+                }
+            });
         }
 
         function processCSVRows(rows) {
             rawData = rows.map((r, idx) => {
-                const region = toStr(r['Region'] || r['region']) || 'Rathnapura';
-                const district = toStr(r['District'] || r['district']) || region;
-                const estate = toStr(r['Estate'] || r['estate']) || `Site ${idx+1}`;
-                const division = toStr(r['Division'] || r['division']) || '-';
-                const ia = toStr(r["IA's"] || r["IA"]) || 'SEC';
-                const rpc = toStr(r['RPC'] || r["RPC's"] || r['rpc']) || '-';
+                const region = r['Region'] || r['region'] || 'Rathnapura';
+                const district = r['District'] || r['district'] || region;
+                const estate = r['Estate'] || r['estate'] || `Site ${idx+1}`;
+                const division = r['Division'] || r['division'] || '-';
+                const ia = r["IA's"] || r["IA"] || 'SEC';
+                const rpc = r['RPC'] || r["RPC's"] || r['rpc'] || '-';
                 
-                let rawUnits = r['Units (2184 List)'] || r['Units (2020 List)'] || r['Units'] || '0';
+                let rawUnits = r['Units (2529 List)'] || r['Units (2020 List)'] || r['Units'] || '0';
                 if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
                 const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = toStr(r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued']) || 'Yes';
+                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
-                const reportUnits = parseUnitsValue(r['NBRI 1st Report - Units'] || r['NBRI 1st Report Units']);
-                const bodCompleted = toStr(r['BOD Completed']) || 'No';
-                const bodMarkedUnits = parseUnitsValue(r['BOD Marked on Ground'] || r['BOD Marked On Ground'] || r['BOD Morked on Ground']);
-                const perimeterSurvey = toStr(r['Perimeter Survey']) || 'Yes';
-                const droneSurvey = toStr(r['Drone Survey']) || 'Completed';
-                const conceptualDesign = toStr(r['NBRI Conceptual Design']) || 'In Progress';
-                const conceptualUnits = parseUnitsValue(r['NBRI Conceptual Design - Units'] || r['NBRI Conceptual Design Units']);
-                const report2Issued = toStr(r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued']) || 'No';
+                const bodCompleted = (r['BOD Completed'] || 'No').trim();
+                const perimeterSurvey = r['Perimeter Survey'] || 'Yes';
+                const droneSurvey = r['Drone Survey'] || 'Completed';
+                const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
+                const report2Issued = (r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued'] || 'No').trim();
                 const report2Year = r['NBRI 2nd Report - Year '] || r['NBRI 2nd Report - Year'] || '';
-                const report2Units = parseUnitsValue(r['NBRI 2nd Report - Units'] || r['NBRI 2nd Report Units']);
                 
                 // Directly capture raw link from spreadsheet cell (handles SharePoint / Drive / Web URLs)
-                const reportLinkRaw = toStr(r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link']);
+                const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link'] || '';
                 const reportLink = formatReportURL(reportLinkRaw, estate);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
@@ -1008,8 +951,8 @@ html_template = """
 
                 return { 
                     sno: idx + 1, region, district, estate, division, ia, rpc, units, 
-                    reportIssued, reportYear, reportUnits, bodCompleted, bodMarkedUnits, perimeterSurvey, droneSurvey, 
-                    conceptualDesign, conceptualUnits, report2Issued, report2Year, report2Units, reportLinkRaw, reportLink, lat, lng 
+                    reportIssued, reportYear, bodCompleted, perimeterSurvey, droneSurvey, 
+                    conceptualDesign, report2Issued, report2Year, reportLinkRaw, reportLink, lat, lng 
                 };
             });
 
@@ -1102,17 +1045,6 @@ html_template = """
             document.getElementById('kpi-report2-issued').textContent = report2IssuedCount;
             document.getElementById('kpi-report2-pct').textContent = `${report2Pct}%`;
             document.getElementById('kpi-report2-bar').style.width = `${report2Pct}%`;
-
-            // Unit-level detail drawn from the corresponding "- Units" / ground-marking columns
-            const reportUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.reportUnits || 0), 0);
-            const conceptualUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.conceptualUnits || 0), 0);
-            const bodMarkedUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.bodMarkedUnits || 0), 0);
-            const report2UnitsSum = filteredData.reduce((acc, curr) => acc + (curr.report2Units || 0), 0);
-
-            document.getElementById('kpi-report-units').textContent = `NBRI 1st Report - Units: ${reportUnitsSum.toLocaleString()}`;
-            document.getElementById('kpi-conceptual-units').textContent = `NBRI Conceptual Design - Units: ${conceptualUnitsSum.toLocaleString()}`;
-            document.getElementById('kpi-bod-units').textContent = `BOD Marked on Ground: ${bodMarkedUnitsSum.toLocaleString()}`;
-            document.getElementById('kpi-report2-units').textContent = `NBRI 2nd Report - Units: ${report2UnitsSum.toLocaleString()}`;
         }
 
         function updateMapMarkers(selectedDistrict) {
@@ -1322,12 +1254,9 @@ html_template = """
         function renderMainTable() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
-            const registryRows = getRegistryMatches();
-            document.getElementById('table-count').textContent = registrySearchTerm
-                ? `Showing ${registryRows.length} of ${filteredData.length} sites`
-                : `Showing ${filteredData.length} sites`;
+            document.getElementById('table-count').textContent = `Showing ${filteredData.length} sites`;
 
-            registryRows.forEach(row => {
+            filteredData.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
                 
@@ -1450,70 +1379,6 @@ html_template = """
             document.getElementById('filter-ia').addEventListener('change', applyFilters);
             document.getElementById('filter-rpc').addEventListener('change', applyFilters);
             document.getElementById('search-input').addEventListener('input', applyFilters);
-
-            const registrySearchInput = document.getElementById('registry-search');
-            registrySearchInput.addEventListener('input', handleRegistrySearchInput);
-            registrySearchInput.addEventListener('focus', renderRegistrySearchSuggestions);
-            document.addEventListener('click', (e) => {
-                const box = document.getElementById('registry-search-results');
-                if (box && !box.contains(e.target) && e.target !== registrySearchInput) {
-                    box.classList.add('hidden');
-                }
-            });
-        }
-
-        // Local search scoped to the Resettlement Site Details Registry table only.
-        // Lets the user find and select a specific site/location without touching the
-        // global region/district/IA/RPC filters above the map.
-        function handleRegistrySearchInput() {
-            registrySearchTerm = document.getElementById('registry-search').value.toLowerCase().trim();
-            renderMainTable();
-            renderRegistrySearchSuggestions();
-        }
-
-        function getRegistryMatches() {
-            if (!registrySearchTerm) return filteredData;
-            return filteredData.filter(item =>
-                (item.estate || '').toLowerCase().includes(registrySearchTerm) ||
-                (item.division || '').toLowerCase().includes(registrySearchTerm) ||
-                (item.district || '').toLowerCase().includes(registrySearchTerm) ||
-                (item.region || '').toLowerCase().includes(registrySearchTerm)
-            );
-        }
-
-        function renderRegistrySearchSuggestions() {
-            const box = document.getElementById('registry-search-results');
-            if (!box) return;
-            if (!registrySearchTerm) { box.classList.add('hidden'); box.innerHTML = ''; return; }
-
-            const matches = getRegistryMatches().slice(0, 8);
-            if (matches.length === 0) {
-                box.innerHTML = `<div class="px-3 py-2.5 text-[11px] text-slate-500 italic">No matching site or location found</div>`;
-                box.classList.remove('hidden');
-                return;
-            }
-
-            box.innerHTML = matches.map(site => `
-                <div class="px-3 py-2 text-[11px] text-slate-200 hover:bg-purple-500/20 cursor-pointer border-b border-slate-800/60 last:border-b-0" data-sno="${site.sno}">
-                    <span class="font-semibold text-cyan-300">${site.estate}</span>
-                    <span class="text-slate-400"> — ${site.division}, ${site.district}</span>
-                </div>
-            `).join('');
-            box.classList.remove('hidden');
-
-            box.querySelectorAll('[data-sno]').forEach(el => {
-                el.addEventListener('click', () => {
-                    const sno = parseInt(el.getAttribute('data-sno'));
-                    const site = filteredData.find(s => s.sno === sno);
-                    if (site) {
-                        selectSiteRow(site);
-                        document.getElementById('registry-search').value = site.estate;
-                        registrySearchTerm = site.estate.toLowerCase();
-                        renderMainTable();
-                    }
-                    box.classList.add('hidden');
-                });
-            });
         }
 
         function handleAIPress(e) { if (e.key === 'Enter') sendAIMessage(); }
