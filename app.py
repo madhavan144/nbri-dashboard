@@ -2,12 +2,16 @@ import streamlit as st
 import streamlit.components.v1 as components
 import os
 import json
+import csv
+import io
+import urllib.request
+from datetime import datetime
 
 # ==========================================
 # 1. PAGE CONFIGURATION
 # ==========================================
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
-BG_IMAGE_URL = "https://images.unsplash.com/photo-1600431521340-491eca880813?q=80&w=1920&auto=format&fit=crop"
+BG_IMAGE_URL = "https://images.unsplash.com/photo-1625337905916-f1172a75d5b8?fm=jpg&q=80&w=1920&auto=format&fit=crop"
 
 st.set_page_config(
     page_title="IHP Resettlement Progress Dashboard",
@@ -167,6 +171,100 @@ def render_login_gate():
 if not st.session_state.authenticated:
     render_login_gate()
     st.stop()
+
+# ==========================================
+# 2d. LIVE SHEET-UPDATE NOTIFICATIONS
+# ==========================================
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGEDtnF-wjT39hcvY3tkA_PpRO1FM06-M267dOBvKYGYlgD-udcevC8LrWGjM_XA/pub?gid=143716875&single=true&output=csv"
+
+# Columns that count as "important" when they change for an existing site
+WATCHED_FIELDS = [
+    ("NBRI 1st Report - Issued", "NBRI 1st Report Issued"),
+    ("BOD Completed", "BOD Completed"),
+    ("NBRI Conceptual Design", "Conceptual Plan"),
+    ("NBRI 2nd Report - Issued", "NBRI 2nd Report Issued"),
+]
+
+def fetch_sheet_rows():
+    """Downloads and parses the published Google Sheet CSV. Returns a list of dict rows, or None on failure."""
+    try:
+        req = urllib.request.Request(SHEET_CSV_URL, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            raw = resp.read().decode("utf-8", errors="ignore")
+        reader = csv.DictReader(io.StringIO(raw))
+        return list(reader)
+    except Exception:
+        return None
+
+def row_key(row):
+    district = (row.get("District") or row.get("district") or "").strip()
+    estate = (row.get("Estate") or row.get("estate") or "").strip()
+    division = (row.get("Division") or row.get("division") or "").strip()
+    return f"{district}|{estate}|{division}"
+
+def watched_value(row, field_name):
+    for key in field_name:
+        if key in row:
+            return (row.get(key) or "").strip()
+    return ""
+
+def get_field_variants(field_label):
+    variants_map = {
+        "NBRI 1st Report - Issued": ["NBRI 1st Report - Issued", "NBRI 1st Report Issued"],
+        "BOD Completed": ["BOD Completed"],
+        "NBRI Conceptual Design": ["NBRI Conceptual Design"],
+        "NBRI 2nd Report - Issued": ["NBRI 2nd Report - Issued", "NBRI 2nd Report Issued"],
+    }
+    return variants_map.get(field_label, [field_label])
+
+def check_for_sheet_updates(silent_baseline=False):
+    """Fetches the sheet, compares to the last known snapshot, and appends any
+    new/changed-site notifications to session_state.notifications."""
+    rows = fetch_sheet_rows()
+    if rows is None:
+        return
+
+    new_snapshot = {}
+    fresh_notifications = []
+
+    for row in rows:
+        key = row_key(row)
+        if not key.strip("|"):
+            continue
+        watched = {label: watched_value(row, get_field_variants(label)) for label, _ in WATCHED_FIELDS}
+        new_snapshot[key] = watched
+
+        old_watched = st.session_state.sheet_snapshot.get(key)
+        estate_name = (row.get("Estate") or row.get("estate") or "Site").strip()
+
+        if old_watched is None:
+            if not silent_baseline:
+                fresh_notifications.append(f"New site added to the sheet: **{estate_name}**")
+        else:
+            for label, display_name in WATCHED_FIELDS:
+                if old_watched.get(label, "") != watched.get(label, ""):
+                    fresh_notifications.append(
+                        f"**{display_name}** updated for **{estate_name}**: "
+                        f"\"{old_watched.get(label, '') or '—'}\" → \"{watched.get(label, '') or '—'}\""
+                    )
+
+    st.session_state.sheet_snapshot = new_snapshot
+    if fresh_notifications:
+        stamp = datetime.now().strftime("%d %b %Y, %I:%M %p")
+        for msg in fresh_notifications:
+            st.session_state.notifications.insert(0, {"text": msg, "time": stamp, "read": False})
+        st.session_state.notifications = st.session_state.notifications[:50]
+
+if "sheet_snapshot" not in st.session_state:
+    st.session_state.sheet_snapshot = {}
+if "notifications" not in st.session_state:
+    st.session_state.notifications = []
+if "show_notifications" not in st.session_state:
+    st.session_state.show_notifications = False
+if "sheet_baseline_done" not in st.session_state:
+    # Establish a silent baseline on first load so we don't flag all existing rows as "new"
+    check_for_sheet_updates(silent_baseline=True)
+    st.session_state.sheet_baseline_done = True
 
 # ==========================================
 # 3. HTML, CSS, JS INTEGRATED DASHBOARD TEMPLATE
@@ -1341,12 +1439,38 @@ html_template = """
 # ==========================================
 # 4. STREAMLIT RENDER
 # ==========================================
-top_left, top_right = st.columns([6, 1])
-with top_right:
+unread_count = sum(1 for n in st.session_state.notifications if not n["read"])
+bell_label = f"🔔 Notifications ({unread_count})" if unread_count > 0 else "🔔 Notifications"
+
+top_left, bell_col, logout_col = st.columns([6, 1.4, 1])
+with bell_col:
+    if st.button(bell_label, use_container_width=True):
+        check_for_sheet_updates(silent_baseline=False)
+        st.session_state.show_notifications = not st.session_state.show_notifications
+        for n in st.session_state.notifications:
+            n["read"] = True
+        st.rerun()
+with logout_col:
     if st.button("Logout", use_container_width=True):
         st.session_state.authenticated = False
         st.session_state.current_user = ""
         st.rerun()
+
+if st.session_state.show_notifications:
+    with st.container(border=True):
+        header_col, clear_col = st.columns([5, 1])
+        with header_col:
+            st.markdown("**Recent Sheet Activity**")
+        with clear_col:
+            if st.button("Clear all", key="clear_notifs"):
+                st.session_state.notifications = []
+                st.rerun()
+
+        if not st.session_state.notifications:
+            st.caption("No updates yet. New sheet changes (report status, BOD clearance, conceptual plan, new sites) will show up here.")
+        else:
+            for n in st.session_state.notifications[:20]:
+                st.markdown(f"- {n['text']}  \n  <span style='color:#94a3b8; font-size:0.75rem;'>{n['time']}</span>", unsafe_allow_html=True)
 
 html_dashboard = (
     html_template
