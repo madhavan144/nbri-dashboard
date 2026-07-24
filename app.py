@@ -175,7 +175,11 @@ if not st.session_state.authenticated:
 # ==========================================
 # 2d. LIVE SHEET-UPDATE NOTIFICATIONS
 # ==========================================
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGEDtnF-wjT39hcvY3tkA_PpRO1FM06-M267dOBvKYGYlgD-udcevC8LrWGjM_XA/pub?gid=143716875&single=true&output=csv"
+# NOTE: Source moved from a published Google Sheet CSV to a SharePoint Excel workbook.
+# The share link only works here if it is set to "Anyone with the link can view" -
+# a link that requires NBRO sign-in will fail to load in the browser/server fetch below.
+SHAREPOINT_SHEET_VIEW_URL = "https://nbrosl-my.sharepoint.com/:x:/g/personal/resettlement_nbri_gov_lk/IQBFwJPduu3dR7dbiiPYf_91AbXE4khDCG0F9EFyoUKmulc?rtime=T3tVpmvp3kg"
+SHEET_CSV_URL = SHAREPOINT_SHEET_VIEW_URL.split("?")[0] + "?download=1"
 
 # Columns that count as "important" when they change for an existing site
 WATCHED_FIELDS = [
@@ -186,26 +190,43 @@ WATCHED_FIELDS = [
 ]
 
 def fetch_sheet_rows():
-    """Downloads and parses the published Google Sheet CSV. Returns a list of dict rows, or None on failure."""
+    """Downloads the SharePoint Excel workbook and parses its first sheet into a list of
+    dict rows (header row -> keys), or returns None on failure (including missing
+    openpyxl, or a link that requires sign-in and returns an HTML login page instead
+    of the workbook)."""
     try:
         req = urllib.request.Request(SHEET_CSV_URL, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            raw = resp.read().decode("utf-8", errors="ignore")
-        reader = csv.DictReader(io.StringIO(raw))
-        return list(reader)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            raw_bytes = resp.read()
+        try:
+            from openpyxl import load_workbook
+        except ImportError:
+            return None
+        wb = load_workbook(io.BytesIO(raw_bytes), data_only=True)
+        ws = wb.active
+        rows_iter = ws.iter_rows(values_only=True)
+        headers = next(rows_iter, None)
+        if not headers:
+            return None
+        headers = [("" if h is None else str(h).strip()) for h in headers]
+        rows = []
+        for values in rows_iter:
+            row = {headers[i]: ("" if values[i] is None else values[i]) for i in range(min(len(headers), len(values)))}
+            rows.append(row)
+        return rows
     except Exception:
         return None
 
 def row_key(row):
-    district = (row.get("District") or row.get("district") or "").strip()
-    estate = (row.get("Estate") or row.get("estate") or "").strip()
-    division = (row.get("Division") or row.get("division") or "").strip()
+    district = str(row.get("District") or row.get("district") or "").strip()
+    estate = str(row.get("Estate") or row.get("estate") or "").strip()
+    division = str(row.get("Division") or row.get("division") or "").strip()
     return f"{district}|{estate}|{division}"
 
 def watched_value(row, field_name):
     for key in field_name:
         if key in row:
-            return (row.get(key) or "").strip()
+            return str(row.get(key) or "").strip()
     return ""
 
 def get_field_variants(field_label):
@@ -235,7 +256,7 @@ def check_for_sheet_updates(silent_baseline=False):
         new_snapshot[key] = watched
 
         old_watched = st.session_state.sheet_snapshot.get(key)
-        estate_name = (row.get("Estate") or row.get("estate") or "Site").strip()
+        estate_name = str(row.get("Estate") or row.get("estate") or "Site").strip()
 
         if old_watched is None:
             if not silent_baseline:
@@ -289,8 +310,8 @@ html_template = """
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PapaParse for Live CSV Parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS for Live Excel (.xlsx) Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -764,8 +785,10 @@ html_template = """
         // Currently logged-in user, injected server-side, used to attribute discussion comments
         window.currentUser = { name: "{{CURRENT_USER}}" };
 
-        // Live Google Sheets published CSV URL
-        const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGEDtnF-wjT39hcvY3tkA_PpRO1FM06-M267dOBvKYGYlgD-udcevC8LrWGjM_XA/pub?gid=143716875&single=true&output=csv";
+        // Live source: SharePoint Excel workbook, converted to a direct-download link.
+        // This only works if the file is shared as "Anyone with the link can view" -
+        // a sign-in-only link will fail this fetch (browser gets a login page instead of the file).
+        const DEFAULT_CSV_URL = "https://nbrosl-my.sharepoint.com/:x:/g/personal/resettlement_nbri_gov_lk/IQBFwJPduu3dR7dbiiPYf_91AbXE4khDCG0F9EFyoUKmulc?download=1";
 
         // Locally uploaded district boundary GeoJSON, embedded server-side by app.py (falls back to remote if not present)
         const LOCAL_DISTRICT_GEOJSON = {{DISTRICT_GEOJSON}};
@@ -913,20 +936,27 @@ html_template = """
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.add('fa-spin');
 
-            Papa.parse(DEFAULT_CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
+            fetch(DEFAULT_CSV_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error('Sheet fetch failed with status ' + res.status);
+                    return res.arrayBuffer();
+                })
+                .then(buffer => {
+                    const workbook = XLSX.read(buffer, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[firstSheetName];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
-                    if (results.data && results.data.length > 0) {
-                        processCSVRows(results.data);
+                    if (rows && rows.length > 0) {
+                        processCSVRows(rows);
                     }
-                },
-                error: function() {
+                })
+                .catch(err => {
                     if (syncIcon) syncIcon.classList.remove('fa-spin');
-                }
-            });
+                    // Common cause: the SharePoint link isn't shared as "Anyone with the link can view",
+                    // so the fetch returns a login page instead of the workbook.
+                    console.log('Sheet load error (check SharePoint sharing permissions):', err);
+                });
         }
 
         function parseUnitsValue(raw) {
@@ -935,34 +965,41 @@ html_template = """
             return parseInt(cleaned) || 0;
         }
 
+        // xlsx cells can come back as numbers/dates rather than strings (unlike the old CSV
+        // parser), so string fields are coerced through this before .trim()/comparisons.
+        function toStr(raw) {
+            if (raw === undefined || raw === null) return '';
+            return String(raw).trim();
+        }
+
         function processCSVRows(rows) {
             rawData = rows.map((r, idx) => {
-                const region = r['Region'] || r['region'] || 'Rathnapura';
-                const district = r['District'] || r['district'] || region;
-                const estate = r['Estate'] || r['estate'] || `Site ${idx+1}`;
-                const division = r['Division'] || r['division'] || '-';
-                const ia = r["IA's"] || r["IA"] || 'SEC';
-                const rpc = r['RPC'] || r["RPC's"] || r['rpc'] || '-';
+                const region = toStr(r['Region'] || r['region']) || 'Rathnapura';
+                const district = toStr(r['District'] || r['district']) || region;
+                const estate = toStr(r['Estate'] || r['estate']) || `Site ${idx+1}`;
+                const division = toStr(r['Division'] || r['division']) || '-';
+                const ia = toStr(r["IA's"] || r["IA"]) || 'SEC';
+                const rpc = toStr(r['RPC'] || r["RPC's"] || r['rpc']) || '-';
                 
-                let rawUnits = r['Units (2529 List)'] || r['Units (2020 List)'] || r['Units'] || '0';
+                let rawUnits = r['Units (2184 List)'] || r['Units (2020 List)'] || r['Units'] || '0';
                 if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
                 const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
+                const reportIssued = toStr(r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued']) || 'Yes';
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
                 const reportUnits = parseUnitsValue(r['NBRI 1st Report - Units'] || r['NBRI 1st Report Units']);
-                const bodCompleted = (r['BOD Completed'] || 'No').trim();
+                const bodCompleted = toStr(r['BOD Completed']) || 'No';
                 const bodMarkedUnits = parseUnitsValue(r['BOD Marked on Ground'] || r['BOD Marked On Ground'] || r['BOD Morked on Ground']);
-                const perimeterSurvey = r['Perimeter Survey'] || 'Yes';
-                const droneSurvey = r['Drone Survey'] || 'Completed';
-                const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
+                const perimeterSurvey = toStr(r['Perimeter Survey']) || 'Yes';
+                const droneSurvey = toStr(r['Drone Survey']) || 'Completed';
+                const conceptualDesign = toStr(r['NBRI Conceptual Design']) || 'In Progress';
                 const conceptualUnits = parseUnitsValue(r['NBRI Conceptual Design - Units'] || r['NBRI Conceptual Design Units']);
-                const report2Issued = (r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued'] || 'No').trim();
+                const report2Issued = toStr(r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued']) || 'No';
                 const report2Year = r['NBRI 2nd Report - Year '] || r['NBRI 2nd Report - Year'] || '';
                 const report2Units = parseUnitsValue(r['NBRI 2nd Report - Units'] || r['NBRI 2nd Report Units']);
                 
                 // Directly capture raw link from spreadsheet cell (handles SharePoint / Drive / Web URLs)
-                const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link'] || '';
+                const reportLinkRaw = toStr(r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link']);
                 const reportLink = formatReportURL(reportLinkRaw, estate);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
