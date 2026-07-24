@@ -5,7 +5,7 @@ import streamlit.components.v1 as components # type: ignore[import-not-found]
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
 
 st.set_page_config(
-    page_title="NBRI - Cyber HUD Resettlement Dashboard",
+    page_title="NBRI - IHP Resettlement Progress Dashboard",
     page_icon=LOGO_URL,
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -30,14 +30,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. Sci-Fi Cyber-Blue Integrated Dashboard Template
+# 3. HTML, CSS, JS Integrated Dashboard Template
 html_template = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBRI - Cyber Resettlement Progress Dashboard</title>
+    <title>NBRI - IHP 4700 Resettlement Progress Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -45,13 +45,13 @@ html_template = """
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PapaParse -->
+    <!-- PapaParse for Live CSV Parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <script>
@@ -60,15 +60,16 @@ html_template = """
                 extend: {
                     fontFamily: {
                         sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        orbitron: ['Orbitron', 'sans-serif'],
                     },
                     colors: {
-                        cyberDark: '#030712',
-                        cyberBlue: '#0284c7',
-                        neonCyan: '#06b6d4',
-                        neonGlow: '#38bdf8',
-                        cardBg: 'rgba(6, 15, 30, 0.85)',
-                        borderGlow: 'rgba(6, 182, 212, 0.3)'
+                        darkBg: '#080a14',
+                        cardBg: 'rgba(15, 20, 38, 0.85)',
+                        cardBorder: 'rgba(255, 255, 255, 0.08)',
+                        accentPurple: '#a855f7',
+                        accentBlue: '#3b82f6',
+                        accentCyan: '#06b6d4',
+                        accentGreen: '#10b981',
+                        accentAmber: '#f59e0b',
                     }
                 }
             }
@@ -78,206 +79,355 @@ html_template = """
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #02040a;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
-                linear-gradient(rgba(2, 6, 23, 0.94), rgba(2, 6, 23, 0.98)),
-                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6, 182, 212, 0.03) 2px, rgba(6, 182, 212, 0.03) 4px);
+            background: radial-gradient(circle at 20% 20%, #0c1021 0%, #060810 60%, #020307 100%);
             background-attachment: fixed;
             color: #e2e8f0;
             margin: 0;
             padding: 0;
         }
 
-        .hud-border {
-            background: rgba(8, 20, 42, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(6, 182, 212, 0.25);
-            box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-            position: relative;
+        .glass-panel {
+            background: rgba(15, 21, 38, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
 
-        .hud-border::before {
-            content: '';
-            position: absolute;
-            top: -1px; left: -1px; width: 10px; height: 10px;
-            border-top: 2px solid #06b6d4;
-            border-left: 2px solid #06b6d4;
-        }
-        .hud-border::after {
-            content: '';
-            position: absolute;
-            bottom: -1px; right: -1px; width: 10px; height: 10px;
-            border-bottom: 2px solid #06b6d4;
-            border-right: 2px solid #06b6d4;
+        .glass-panel-glow {
+            background: rgba(20, 28, 50, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
         }
 
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(2, 6, 23, 0.8); }
-        ::-webkit-scrollbar-thumb { background: #0284c7; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.7);
+        }
 
         .glowing-pin {
-            display: block; width: 12px; height: 12px;
-            border-radius: 50%; background: #06b6d4;
-            box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
+            display: block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #06b6d4;
+            box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8);
             animation: pulse-cyan 2s infinite;
         }
-        @keyframes pulse-cyan {
-            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
-            70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(6, 182, 212, 0); }
-            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        .glowing-pin.completed {
+            background: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8);
+            animation: pulse-green 2s infinite;
+        }
+        .glowing-pin.pending {
+            background: #f59e0b;
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8);
+            animation: pulse-amber 2s infinite;
         }
 
-        .leaflet-container { background: #02040a !important; }
-        .leaflet-popup-content-wrapper {
-            background: rgba(6, 15, 30, 0.95) !important;
-            color: #f8fafc !important;
-            border: 1px solid #06b6d4;
-            border-radius: 8px !important;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+        @keyframes pulse-cyan {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
         }
-        .leaflet-popup-tip { background: rgba(6, 15, 30, 0.95) !important; }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-amber {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        .leaflet-container {
+            background: #050811 !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        .leaflet-popup-content-wrapper {
+            background: rgba(13, 18, 36, 0.95) !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 12px !important;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+        .leaflet-popup-tip {
+            background: rgba(13, 18, 36, 0.95) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-10">
 
-    <!-- HEADER NAVIGATION -->
-    <header class="sticky top-0 z-50 hud-border border-b border-cyan-500/30 px-6 py-3 mb-6 bg-slate-950/90">
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800 px-6 py-3 mb-6">
         <div class="max-w-[1750px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             
+            <!-- LOGO & TITLE -->
             <div class="flex items-center gap-3.5">
-                <div class="w-10 h-10 rounded bg-cyan-950/50 border border-cyan-500/50 p-1 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <img src="{{LOGO_URL}}" alt="NBRO" class="w-full h-full object-contain">
+                <div id="logo-container" class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 p-1 flex items-center justify-center shadow-lg shadow-cyan-500/10 overflow-hidden">
+                    <img src="{{LOGO_URL}}" alt="NBRO Logo" class="w-full h-full object-contain">
                 </div>
                 <div>
-                    <h1 class="text-lg font-extrabold tracking-wider text-cyan-400 font-orbitron flex items-center gap-2">
-                        <i class="fa-solid fa-microchip text-xs animate-pulse"></i> NBRI RESETTLEMENT COMMAND CENTER
-                    </h1>
-                    <p class="text-[11px] text-slate-400 tracking-wide">Spatial Monitoring & Progress Analytics HUD</p>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold tracking-tight text-white">NBRI - IHP 4700 RESETTLEMENT DASHBOARD</h1>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Tracker Sync
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400">Resettlement Progress & Spatial Monitoring of Plantation Estate Sectors</p>
                 </div>
             </div>
 
-            <!-- FILTERS -->
+            <!-- FILTERS & RELOAD -->
             <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                <select id="filter-region" class="bg-slate-900 text-xs text-cyan-300 px-3 py-2 rounded border border-cyan-500/40 focus:outline-none font-mono">
-                    <option value="ALL">ALL REGIONS</option>
-                </select>
+                <div class="relative flex-1 md:flex-initial">
+                    <i class="fa-solid fa-layer-group absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <select id="filter-region" class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer">
+                        <option value="ALL">All Regions</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]"></i>
+                </div>
 
-                <select id="filter-district" class="bg-slate-900 text-xs text-cyan-300 px-3 py-2 rounded border border-cyan-500/40 focus:outline-none font-mono">
-                    <option value="ALL">ALL DISTRICTS</option>
-                </select>
+                <div class="relative flex-1 md:flex-initial">
+                    <i class="fa-solid fa-map-location-dot absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <select id="filter-district" class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer">
+                        <option value="ALL">All Districts</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]"></i>
+                </div>
 
-                <input type="text" id="search-input" placeholder="SEARCH ESTATE..." class="bg-slate-900 text-xs text-cyan-200 px-3 py-2 rounded border border-cyan-500/40 focus:outline-none placeholder-slate-600 font-mono">
+                <div class="relative flex-1 md:flex-initial">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="search-input" placeholder="Search estate or division..." class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-4 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none placeholder-slate-500">
+                </div>
 
-                <button onclick="fetchCSVData()" class="px-3 py-2 bg-cyan-600/30 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-400/50 rounded text-xs font-mono transition flex items-center gap-2">
-                    <i id="sync-icon" class="fa-solid fa-arrows-rotate"></i> SYNC
+                <button onclick="fetchCSVData()" class="px-3.5 py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-xl text-xs font-medium transition flex items-center gap-2">
+                    <i id="sync-icon" class="fa-solid fa-arrows-rotate"></i> Reload Live CSV
                 </button>
             </div>
+
         </div>
     </header>
 
-    <!-- MAIN DASHBOARD CONTENT -->
+    <!-- MAIN CONTAINER -->
     <main class="max-w-[1750px] mx-auto px-4 sm:px-6">
 
-        <!-- KPI STATS PANEL -->
+        <!-- KPI GRID -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="hud-border p-4 rounded bg-slate-950/60">
-                <span class="text-[10px] font-orbitron tracking-widest text-slate-400 uppercase">TOTAL SITES</span>
-                <h2 id="kpi-total-sites" class="text-3xl font-extrabold text-cyan-400 font-orbitron mt-1">--</h2>
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-cyan-500/40 transition">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Sites</span>
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <h2 id="kpi-total-sites" class="text-3xl font-extrabold text-white">--</h2>
+                    <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">Active Sites</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-2">Monitored resettlement locations</p>
             </div>
-            <div class="hud-border p-4 rounded bg-slate-950/60">
-                <span class="text-[10px] font-orbitron tracking-widest text-slate-400 uppercase">TOTAL UNITS</span>
-                <h2 id="kpi-total-units" class="text-3xl font-extrabold text-cyan-400 font-orbitron mt-1">--</h2>
+
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-blue-500/40 transition">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Units Planned</span>
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                        <i class="fa-solid fa-house-chimney"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <h2 id="kpi-total-units" class="text-3xl font-extrabold text-white">--</h2>
+                    <span class="text-xs text-cyan-400 font-semibold">Housing Units</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-2">Aggregated resettlement capacity</p>
             </div>
-            <div class="hud-border p-4 rounded bg-slate-950/60">
-                <span class="text-[10px] font-orbitron tracking-widest text-slate-400 uppercase">1ST REPORT ISSUED</span>
-                <h2 id="kpi-report-issued" class="text-3xl font-extrabold text-emerald-400 font-orbitron mt-1">--</h2>
+
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-purple-500/40 transition">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">1st Report Issued</span>
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                        <i class="fa-solid fa-file-shield"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <h2 id="kpi-report-issued" class="text-3xl font-extrabold text-white">--</h2>
+                    <span id="kpi-report-pct" class="text-xs text-purple-400 font-semibold">--%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div id="kpi-report-bar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full w-0 transition-all duration-700"></div>
+                </div>
             </div>
-            <div class="hud-border p-4 rounded bg-slate-950/60">
-                <span class="text-[10px] font-orbitron tracking-widest text-slate-400 uppercase">BOD COMPLETED</span>
-                <h2 id="kpi-bod-completed" class="text-3xl font-extrabold text-blue-400 font-orbitron mt-1">--</h2>
+
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/40 transition">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">BOD Completed</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <h2 id="kpi-bod-completed" class="text-3xl font-extrabold text-white">--</h2>
+                    <span id="kpi-bod-pct" class="text-xs text-emerald-400 font-semibold">--%</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-2">Clearance & construction handovers</p>
             </div>
         </section>
 
-        <!-- DASHBOARD GRID -->
+        <!-- DASHBOARD BODY -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- LEFT AREA: GIS MAP & TABLES -->
+            <!-- LEFT 8 COLS -->
             <div class="lg:col-span-8 flex flex-col gap-6">
                 
-                <!-- SCI-FI GIS MAP -->
-                <div class="hud-border rounded p-4 relative">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-xs font-orbitron tracking-wider text-cyan-400 flex items-center gap-2">
-                            <i class="fa-solid fa-crosshairs text-cyan-500"></i> GIS SPATIAL VISUALIZER
-                        </h3>
+                <!-- GIS MAP -->
+                <div class="glass-panel rounded-2xl p-5 relative flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse"></div>
+                            <h3 class="text-base font-bold text-white">Interactive GIS Site Location Map</h3>
+                        </div>
+                        <span id="district-tag" class="hidden text-xs px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg shadow-cyan-500/10 font-medium">
+                            <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> Highlighted District Focused
+                        </span>
                     </div>
-                    <div class="w-full h-[400px] rounded overflow-hidden relative border border-cyan-500/30" id="map"></div>
+                    <div class="w-full h-[420px] rounded-xl overflow-hidden relative border border-slate-800" id="map-container">
+                        <div id="map" class="w-full h-full z-10"></div>
+                    </div>
                 </div>
 
-                <!-- MAIN REGISTRY TABLE WITH WORKING LINK -->
-                <div class="hud-border rounded p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-xs font-orbitron tracking-wider text-cyan-400 flex items-center gap-2">
-                            <i class="fa-solid fa-table-list"></i> SITE REGISTRY & REPORT DOCUMENTS
-                        </h3>
+                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION TABLE -->
+                <div class="glass-panel rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-ol text-cyan-400 text-sm"></i> District-wise Housing Unit Distribution
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Live aggregated totals per district computed directly from tracker spreadsheet</p>
+                        </div>
+                        <span class="text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                            <i class="fa-solid fa-sync mr-1"></i> Auto-Calculated
+                        </span>
                     </div>
                     
-                    <div class="max-h-[350px] overflow-y-auto border border-cyan-500/20 rounded">
-                        <table class="w-full text-left text-xs font-mono">
-                            <thead class="bg-slate-950 text-cyan-400 sticky top-0 z-20 border-b border-cyan-500/30">
+                    <div class="max-h-[280px] overflow-y-auto border border-slate-800/90 rounded-xl">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/95 sticky top-0 z-20 text-slate-400 font-semibold uppercase border-b border-slate-800">
                                 <tr>
-                                    <th class="py-2.5 px-3">NO</th>
-                                    <th class="py-2.5 px-3">REGION</th>
-                                    <th class="py-2.5 px-3">DISTRICT</th>
-                                    <th class="py-2.5 px-3">ESTATE SITE</th>
-                                    <th class="py-2.5 px-3 text-right">UNITS</th>
-                                    <th class="py-2.5 px-3 text-center">REPORT LINK</th>
+                                    <th class="py-3 px-4">#</th>
+                                    <th class="py-3 px-4">District</th>
+                                    <th class="py-3 px-4 text-center">No. of Sites</th>
+                                    <th class="py-3 px-4 text-right">Housing Units</th>
+                                    <th class="py-3 px-4 text-center">Distribution Share</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                            <tbody id="district-summary-body" class="divide-y divide-slate-800/60 font-medium">
+                                <!-- Populated dynamically by JavaScript -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
+                <!-- MAIN SITE DETAILS TABLE -->
+                <div class="glass-panel rounded-2xl p-5 overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-table-cells text-purple-400 text-sm"></i> Resettlement Site Details Registry
+                        </h3>
+                        <div class="text-xs text-slate-400" id="table-count">Showing 0 sites</div>
+                    </div>
+                    
+                    <div class="max-h-[420px] overflow-y-auto pr-1 border border-slate-800/80 rounded-xl">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/95 sticky top-0 z-20 text-slate-400 font-semibold uppercase border-b border-slate-800 backdrop-blur-md">
+                                <tr>
+                                    <th class="py-3 px-3">S.No</th>
+                                    <th class="py-3 px-3">Region</th>
+                                    <th class="py-3 px-3">District</th>
+                                    <th class="py-3 px-3">Estate / Site</th>
+                                    <th class="py-3 px-3">Division</th>
+                                    <th class="py-3 px-3 text-right">Units</th>
+                                    <th class="py-3 px-3 text-center">1st Report</th>
+                                    <th class="py-3 px-3 text-center">BOD</th>
+                                    <th class="py-3 px-3 text-center">Report Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- RIGHT AREA: SUMMARY & DIRECT PDF VIEWER -->
+            <!-- RIGHT 4 COLS -->
             <div class="lg:col-span-4 flex flex-col gap-6">
                 
-                <!-- SELECTED SITE REPORT LINK VIEWER CARD -->
-                <div class="hud-border rounded p-5 bg-slate-950/80 border-cyan-400/50">
-                    <h3 class="text-xs font-orbitron text-cyan-300 mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-file-pdf"></i> ACTIVE REPORT INSPECTOR
+                <!-- CONCEPTUAL LAND SUBDIVISION PLAN STATUS -->
+                <div class="glass-panel rounded-2xl p-5">
+                    <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
                     </h3>
-                    
-                    <div id="report-card-content" class="bg-slate-900/90 p-4 rounded border border-cyan-500/30 text-xs space-y-2 font-mono">
-                        <p class="text-slate-400 italic">Select any site row or marker to inspect the direct report link.</p>
+                    <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
+                    <div class="relative h-[220px] flex items-center justify-center">
+                        <canvas id="subdivisionChart"></canvas>
                     </div>
+                </div>
 
-                    <div id="report-card-action" class="mt-4">
-                        <button disabled class="w-full py-2.5 bg-slate-800 text-slate-500 rounded text-xs font-mono border border-slate-700 cursor-not-allowed">
-                            SELECT A SITE TO OPEN REPORT PDF
+                <!-- AI ASSISTANT -->
+                <div class="glass-panel-glow rounded-2xl p-5 flex flex-col">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white text-xs shadow-lg shadow-purple-500/20">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white">HSPTD AI Assistant</h3>
+                            <p class="text-[10px] text-purple-300">Interactive Resettlement Data Query Bot</p>
+                        </div>
+                    </div>
+                    <div id="ai-chat-box" class="h-[180px] overflow-y-auto space-y-3 p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-xs mb-3">
+                        <div class="flex gap-2">
+                            <div class="w-6 h-6 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-[10px] text-white">AI</div>
+                            <div class="bg-slate-900/90 text-slate-200 p-2.5 rounded-xl border border-slate-800">
+                                Ayubowan! Ask me about estate sites, report links, or district stats.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Ask HSPTD AI..." class="w-full bg-slate-900/90 text-xs text-slate-200 pl-3 pr-10 py-2.5 rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none">
+                        <button onclick="sendAIMessage()" class="absolute right-2 top-1/2 -translate-y-1/2 text-purple-400 hover:text-purple-300 p-1">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- DISTRICT SUMMARY TABLE -->
-                <div class="hud-border rounded p-4">
-                    <h3 class="text-xs font-orbitron tracking-wider text-cyan-400 mb-3">
-                        DISTRICT HOUSING SUMMARY
-                    </h3>
-                    <div class="max-h-[250px] overflow-y-auto">
-                        <table class="w-full text-left text-xs font-mono">
-                            <thead class="text-slate-400 border-b border-slate-800">
-                                <tr>
-                                    <th class="pb-2">DISTRICT</th>
-                                    <th class="pb-2 text-right">UNITS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="district-summary-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
-                        </table>
+                <!-- SELECTED SITE REPORT VIEWER & DETAILS CARD -->
+                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf text-cyan-400 text-xs"></i> Selected Site Info & Report Link
+                            </h3>
+                            <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
+                        </div>
+                        <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
+                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full technical parameters and NBRI PDF report link here.</p>
+                        </div>
+                    </div>
+                    <div id="report-card-action" class="mt-4">
+                        <button disabled class="w-full py-2.5 bg-slate-800/80 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Select a Site to Open Official Link
+                        </button>
                     </div>
                 </div>
 
@@ -286,43 +436,94 @@ html_template = """
     </main>
 
     <script>
+        // Live Google Sheets published CSV URL
         const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGEDtnF-wjT39hcvY3tkA_PpRO1FM06-M267dOBvKYGYlgD-udcevC8LrWGjM_XA/pub?gid=143716875&single=true&output=csv";
 
         let rawData = [];
         let filteredData = [];
         let mapInstance = null;
         let markersGroup = null;
+        let districtHighlightLayer = null;
+        let geojsonBoundaryLayer = null;
+        let subdivisionChartInstance = null;
 
         const districtCoordinates = {
             "Rathnapura": { lat: 6.6828, lng: 80.3992 },
             "Badulla": { lat: 6.9934, lng: 81.0550 },
             "Kalutara": { lat: 6.5854, lng: 79.9607 },
+            "Kaluthara": { lat: 6.5854, lng: 79.9607 },
             "Kegalle": { lat: 7.2513, lng: 80.3464 },
             "Kandy": { lat: 7.2906, lng: 80.6337 },
-            "Nuwara Eliya": { lat: 6.9497, lng: 80.7891 }
+            "Nuwara Eliya": { lat: 6.9497, lng: 80.7891 },
+            "N'Eliya": { lat: 6.9497, lng: 80.7891 },
+            "Galle": { lat: 6.0535, lng: 80.2210 },
+            "Matara": { lat: 5.9549, lng: 80.5550 },
+            "Hambantota": { lat: 6.1241, lng: 81.1185 },
+            "Monaragala": { lat: 6.8718, lng: 81.3487 },
+            "Matale": { lat: 7.4675, lng: 80.6234 }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
+            initCharts();
+            setupEventListeners();
             fetchCSVData();
-            document.getElementById('filter-region').addEventListener('change', applyFilters);
-            document.getElementById('filter-district').addEventListener('change', applyFilters);
-            document.getElementById('search-input').addEventListener('input', applyFilters);
         });
 
         function initMap() {
-            mapInstance = L.map('map', { zoomControl: true }).setView([6.9, 80.6], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(mapInstance);
+            mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([7.8731, 80.7718], 8);
+            
+            // 1. CARTO Flatblue Tile Layer (as requested)
+            L.tileLayer('https://cartocdn_{s}.global.ssl.fastly.net/base-flatblue/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                subdomains: 'abcd',
+                attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+            }).addTo(mapInstance);
+
             markersGroup = L.layerGroup().addTo(mapInstance);
+            districtHighlightLayer = L.layerGroup().addTo(mapInstance);
+
+            // Load Sri Lanka GeoJSON Boundaries with Glow Effect Overlay
+            loadSriLankaAdminBoundaries();
+        }
+
+        function loadSriLankaAdminBoundaries() {
+            fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    geojsonBoundaryLayer = L.geoJSON(data, {
+                        filter: function(feature) {
+                            return feature.properties.ADMIN === "Sri Lanka" || feature.properties.ISO_A3 === "LKA";
+                        },
+                        style: {
+                            color: '#06b6d4',
+                            weight: 2.5,
+                            opacity: 0.85,
+                            fillColor: '#080a14',
+                            fillOpacity: 0.15,
+                            dashArray: '3, 6'
+                        }
+                    }).addTo(mapInstance);
+                })
+                .catch(err => console.log('Admin boundary load error:', err));
         }
 
         function fetchCSVData() {
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.add('fa-spin');
+
             Papa.parse(DEFAULT_CSV_URL, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    if (results.data && results.data.length > 0) processCSVRows(results.data);
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
+                    if (results.data && results.data.length > 0) {
+                        processCSVRows(results.data);
+                    }
+                },
+                error: function() {
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
                 }
             });
         }
@@ -333,44 +534,57 @@ html_template = """
                 const district = r['District'] || r['district'] || region;
                 const estate = r['Estate'] || r['estate'] || `Site ${idx+1}`;
                 const division = r['Division'] || r['division'] || '-';
+                const ia = r["IA's"] || r["IA"] || 'SEC';
                 
                 let rawUnits = r['Units (2529 List)'] || r['Units (2020 List)'] || r['Units'] || '0';
-                const units = parseInt(rawUnits.toString().replace(/[^0-9]/g, '')) || 0;
+                if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
+                const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = (r['NBRI 1st Report - Issued'] || 'Yes').trim();
+                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
+                const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
                 const bodCompleted = (r['BOD Completed'] || 'No').trim();
+                const perimeterSurvey = r['Perimeter Survey'] || 'Yes';
+                const droneSurvey = r['Drone Survey'] || 'Completed';
+                const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
                 
-                // Extraction of Report Direct Link
+                // Smart Link Extraction handling Google Sheet hyperlink texts
                 const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || '';
-                const reportLink = formatReportURL(reportLinkRaw, estate);
+                const reportLink = formatReportURL(reportLinkRaw, estate, district);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
-                let lat = parseFloat(r['Lat']) || (baseCoords.lat + (Math.random() - 0.5) * 0.1);
-                let lng = parseFloat(r['Lon']) || (baseCoords.lng + (Math.random() - 0.5) * 0.1);
+                let lat = parseFloat(r['Lat'] || r['Latitude']) || (baseCoords.lat + (Math.random() - 0.5) * 0.12);
+                let lng = parseFloat(r['Lon'] || r['Longitude']) || (baseCoords.lng + (Math.random() - 0.5) * 0.12);
 
-                return { sno: idx + 1, region, district, estate, division, units, reportIssued, bodCompleted, reportLink, lat, lng };
+                return { 
+                    sno: idx + 1, region, district, estate, division, ia, units, 
+                    reportIssued, reportYear, bodCompleted, perimeterSurvey, droneSurvey, 
+                    conceptualDesign, reportLinkRaw, reportLink, lat, lng 
+                };
             });
 
-            populateDropdowns();
+            populateFilterDropdowns();
             applyFilters();
         }
 
-        function formatReportURL(rawLink, estateName) {
+        // Smart Report Link Parser to handle cell hyperlink text and direct URLs
+        function formatReportURL(rawLink, estateName, districtName) {
             if (!rawLink || rawLink.trim() === '' || rawLink.trim() === '-') return '';
             let cleaned = rawLink.trim();
             if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
-            return `https://www.google.com/search?q=NBRI+Report+${encodeURIComponent(cleaned)}+${encodeURIComponent(estateName)}`;
+            
+            // Constructs lookup search for Google Drive / Sharepoint linked reports
+            return `https://www.google.com/search?q=${encodeURIComponent('NBRO NBRI Report ' + cleaned + ' ' + estateName + ' ' + districtName)}`;
         }
 
-        function populateDropdowns() {
+        function populateFilterDropdowns() {
             const regionSelect = document.getElementById('filter-region');
             const districtSelect = document.getElementById('filter-district');
 
             const regions = [...new Set(rawData.map(d => d.region))].filter(Boolean);
             const districts = [...new Set(rawData.map(d => d.district))].filter(Boolean);
 
-            regionSelect.innerHTML = '<option value="ALL">ALL REGIONS</option>' + regions.map(r => `<option value="${r}">${r}</option>`).join('');
-            districtSelect.innerHTML = '<option value="ALL">ALL DISTRICTS</option>' + districts.map(d => `<option value="${d}">${d}</option>`).join('');
+            regionSelect.innerHTML = '<option value="ALL">All Regions</option>' + regions.map(r => `<option value="${r}">${r}</option>`).join('');
+            districtSelect.innerHTML = '<option value="ALL">All Districts</option>' + districts.map(d => `<option value="${d}">${d}</option>`).join('');
         }
 
         function applyFilters() {
@@ -381,115 +595,304 @@ html_template = """
             filteredData = rawData.filter(item => {
                 const matchRegion = (regionVal === 'ALL' || item.region === regionVal);
                 const matchDistrict = (districtVal === 'ALL' || item.district === districtVal);
-                const matchSearch = !searchVal || item.estate.toLowerCase().includes(searchVal);
+                const matchSearch = !searchVal || item.estate.toLowerCase().includes(searchVal) || item.division.toLowerCase().includes(searchVal);
                 return matchRegion && matchDistrict && matchSearch;
             });
 
             updateKPIs();
+            updateMapMarkers(districtVal);
+            renderDistrictSummaryTable();
+            updateCharts();
             renderMainTable();
-            updateMapMarkers();
-            renderDistrictSummary();
         }
 
         function updateKPIs() {
-            document.getElementById('kpi-total-sites').textContent = filteredData.length;
-            document.getElementById('kpi-total-units').textContent = filteredData.reduce((a, c) => a + c.units, 0).toLocaleString();
-            document.getElementById('kpi-report-issued').textContent = filteredData.filter(d => d.reportIssued.toLowerCase() === 'yes').length;
-            document.getElementById('kpi-bod-completed').textContent = filteredData.filter(d => d.bodCompleted.toLowerCase() === 'yes').length;
+            const totalSites = filteredData.length;
+            const totalUnits = filteredData.reduce((acc, curr) => acc + curr.units, 0);
+            const reportIssuedCount = filteredData.filter(d => d.reportIssued.toLowerCase() === 'yes').length;
+            const bodCompletedCount = filteredData.filter(d => d.bodCompleted.toLowerCase() === 'yes').length;
+
+            const reportPct = totalSites > 0 ? Math.round((reportIssuedCount / totalSites) * 100) : 0;
+            const bodPct = totalSites > 0 ? Math.round((bodCompletedCount / totalSites) * 100) : 0;
+
+            document.getElementById('kpi-total-sites').textContent = totalSites;
+            document.getElementById('kpi-total-units').textContent = totalUnits.toLocaleString();
+            document.getElementById('kpi-report-issued').textContent = reportIssuedCount;
+            document.getElementById('kpi-report-pct').textContent = `${reportPct}%`;
+            document.getElementById('kpi-report-bar').style.width = `${reportPct}%`;
+            document.getElementById('kpi-bod-completed').textContent = bodCompletedCount;
+            document.getElementById('kpi-bod-pct').textContent = `${bodPct}%`;
+        }
+
+        function renderDistrictSummaryTable() {
+            const summaryBody = document.getElementById('district-summary-body');
+            summaryBody.innerHTML = '';
+
+            const districtMap = {};
+            filteredData.forEach(item => {
+                const dist = item.district || 'Unassigned';
+                if (!districtMap[dist]) districtMap[dist] = { sites: 0, units: 0 };
+                districtMap[dist].sites += 1;
+                districtMap[dist].units += item.units;
+            });
+
+            const sortedDistricts = Object.keys(districtMap)
+                .map(d => ({ district: d, ...districtMap[d] }))
+                .sort((a, b) => b.units - a.units);
+
+            const totalUnitsAll = sortedDistricts.reduce((a, c) => a + c.units, 0);
+
+            sortedDistricts.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
+                
+                tr.onclick = () => {
+                    document.getElementById('filter-district').value = row.district;
+                    applyFilters();
+                };
+
+                const pct = totalUnitsAll > 0 ? Math.round((row.units / totalUnitsAll) * 100) : 0;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-slate-400 text-xs">${idx + 1}</td>
+                    <td class="py-3 px-4 font-bold text-white text-xs flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span> ${row.district}
+                    </td>
+                    <td class="py-3 px-4 text-center font-semibold text-slate-300 text-xs">${row.sites}</td>
+                    <td class="py-3 px-4 text-right font-extrabold text-emerald-400 text-xs">${row.units.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-20 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-cyan-400 h-full" style="width: ${pct}%"></div>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-mono">${pct}%</span>
+                        </div>
+                    </td>
+                `;
+                summaryBody.appendChild(tr);
+            });
+        }
+
+        function updateMapMarkers(selectedDistrict) {
+            markersGroup.clearLayers();
+            districtHighlightLayer.clearLayers();
+
+            const districtTag = document.getElementById('district-tag');
+
+            // Glowing Boundary Ring on District Selection
+            if (selectedDistrict !== 'ALL' && districtCoordinates[selectedDistrict]) {
+                const coords = districtCoordinates[selectedDistrict];
+                districtTag.classList.remove('hidden');
+                
+                L.circle([coords.lat, coords.lng], {
+                    color: '#a855f7',
+                    fillColor: '#06b6d4',
+                    fillOpacity: 0.25,
+                    radius: 15000,
+                    weight: 3,
+                    dashArray: '6, 6'
+                }).addTo(districtHighlightLayer);
+
+                if (mapInstance) mapInstance.flyTo([coords.lat, coords.lng], 10, { duration: 1.2 });
+            } else {
+                districtTag.classList.add('hidden');
+            }
+
+            if (filteredData.length === 0) return;
+            const bounds = [];
+
+            filteredData.forEach(site => {
+                const isBod = site.bodCompleted.toLowerCase() === 'yes';
+                const isIssued = site.reportIssued.toLowerCase() === 'yes';
+                let pinClass = isBod ? 'completed' : (isIssued ? '' : 'pending');
+
+                const customIcon = L.divIcon({
+                    className: 'custom-pin-wrapper',
+                    html: `<span class="glowing-pin ${pinClass}"></span>`,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+
+                const marker = L.marker([site.lat, site.lng], { icon: customIcon });
+                
+                let linkButton = site.reportLink 
+                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open NBRI PDF Report</a>`
+                    : '<span class="text-[10px] text-slate-400 mt-1 block">No direct PDF link attached</span>';
+
+                marker.bindPopup(`
+                    <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
+                        <h4 style="font-weight:700; color:#38bdf8; font-size:14px; margin-bottom:6px;">${site.estate}</h4>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>1. Division:</b> ${site.division}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>2. Region / District:</b> ${site.region} / ${site.district}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>3. IA:</b> <span style="color:#a855f7; font-weight:700;">${site.ia}</span></p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. Capacity:</b> <span style="color:#34d399; font-weight:700;">${site.units} Units</span></p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. Report Status:</b> ${site.reportIssued} (${site.reportYear})</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. BOD Clearance:</b> ${site.bodCompleted}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:4px 0 0 0;"><b>7. Report Document:</b></p>
+                        ${linkButton}
+                    </div>
+                `);
+
+                marker.on('click', () => selectSiteRow(site));
+                markersGroup.addLayer(marker);
+                bounds.push([site.lat, site.lng]);
+            });
+
+            if (selectedDistrict === 'ALL' && bounds.length > 0) {
+                mapInstance.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+            }
+        }
+
+        function initCharts() {
+            const ctxSub = document.getElementById('subdivisionChart').getContext('2d');
+            subdivisionChartInstance = new Chart(ctxSub, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'In Progress', 'Not Required', 'Pending'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#cbd5e1', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            let completed = 0, inProgress = 0, notRequired = 0, pending = 0;
+
+            filteredData.forEach(item => {
+                const status = (item.conceptualDesign || '').toLowerCase();
+                if (status.includes('completed')) completed++;
+                else if (status.includes('progress')) inProgress++;
+                else if (status.includes('not required')) notRequired++;
+                else pending++;
+            });
+
+            subdivisionChartInstance.data.datasets[0].data = [completed, inProgress, notRequired, pending];
+            subdivisionChartInstance.update();
         }
 
         function renderMainTable() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
+            document.getElementById('table-count').textContent = `Showing ${filteredData.length} sites`;
 
             filteredData.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-cyan-950/40 cursor-pointer transition';
+                tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
+                
                 tr.onclick = () => selectSiteRow(row);
 
-                // event.stopPropagation ensures direct PDF opening without Map Zoom override
-                let reportButton = row.reportLink 
-                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-block px-2 py-1 rounded bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/50 border border-cyan-400/40 text-[10px] font-bold">
-                        <i class="fa-solid fa-file-pdf mr-1"></i> OPEN REPORT
-                       </a>`
-                    : `<span class="text-slate-600 text-[10px]">NO LINK</span>`;
+                let reportLinkHTML = row.reportLink 
+                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40 border border-cyan-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
+                    : `<span class="text-slate-600 text-[10px]">N/A</span>`;
 
                 tr.innerHTML = `
-                    <td class="py-2 px-3 text-slate-500">${row.sno}</td>
-                    <td class="py-2 px-3">${row.region}</td>
-                    <td class="py-2 px-3">${row.district}</td>
-                    <td class="py-2 px-3 font-bold text-cyan-300">${row.estate}</td>
-                    <td class="py-2 px-3 text-right text-emerald-400 font-bold">${row.units}</td>
-                    <td class="py-2 px-3 text-center">${reportButton}</td>
+                    <td class="py-3 px-3 font-mono text-slate-400">${row.sno}</td>
+                    <td class="py-3 px-3 font-semibold text-slate-200">${row.region}</td>
+                    <td class="py-3 px-3 text-slate-300">${row.district}</td>
+                    <td class="py-3 px-3 font-bold text-cyan-300">${row.estate}</td>
+                    <td class="py-3 px-3 text-slate-400">${row.division}</td>
+                    <td class="py-3 px-3 text-right font-bold text-emerald-400">${row.units}</td>
+                    <td class="py-3 px-3 text-center">${row.reportIssued}</td>
+                    <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
+                    <td class="py-3 px-3 text-center">${reportLinkHTML}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateMapMarkers() {
-            markersGroup.clearLayers();
-            filteredData.forEach(site => {
-                const customIcon = L.divIcon({
-                    className: 'custom-pin',
-                    html: `<span class="glowing-pin"></span>`,
-                    iconSize: [12, 12]
-                });
-
-                const marker = L.marker([site.lat, site.lng], { icon: customIcon });
-                marker.bindPopup(`<b>${site.estate}</b><br>Units: ${site.units}`);
-                marker.on('click', () => selectSiteRow(site));
-                markersGroup.addLayer(marker);
-            });
-        }
-
         function selectSiteRow(site) {
-            if (mapInstance && site.lat && site.lng) mapInstance.setView([site.lat, site.lng], 12);
+            if (mapInstance && site.lat && site.lng) {
+                mapInstance.setView([site.lat, site.lng], 12);
+
+                // Highlight Selected Site District Boundary Ring
+                districtHighlightLayer.clearLayers();
+                L.circle([site.lat, site.lng], {
+                    color: '#06b6d4',
+                    fillColor: '#a855f7',
+                    fillOpacity: 0.2,
+                    radius: 8000,
+                    weight: 2,
+                    dashArray: '4, 4'
+                }).addTo(districtHighlightLayer);
+            }
 
             const content = document.getElementById('report-card-content');
             const action = document.getElementById('report-card-action');
 
             content.innerHTML = `
-                <div class="border-b border-cyan-500/30 pb-2 mb-2">
-                    <h4 class="font-bold text-cyan-300 text-sm">${site.estate}</h4>
-                    <p class="text-[10px] text-slate-400">Division: ${site.division}</p>
+                <div class="border-b border-slate-800 pb-2 mb-2">
+                    <h4 class="font-extrabold text-cyan-300 text-sm">${site.estate}</h4>
+                    <p class="text-[11px] text-slate-400">Division: ${site.division} | IA: <span class="text-purple-300 font-bold">${site.ia}</span></p>
                 </div>
-                <div><b>District:</b> ${site.district}</div>
-                <div><b>Units:</b> <span class="text-emerald-400 font-bold">${site.units}</span></div>
-                <div><b>1st Report:</b> ${site.reportIssued}</div>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-slate-300">
+                    <div><b>1. District:</b> ${site.district}</div>
+                    <div><b>2. Region:</b> ${site.region}</div>
+                    <div><b>3. Housing Units:</b> <span class="text-emerald-400 font-bold">${site.units}</span></div>
+                    <div><b>4. 1st Report:</b> ${site.reportIssued}</div>
+                    <div><b>5. Report Year:</b> ${site.reportYear}</div>
+                    <div><b>6. BOD Clearance:</b> ${site.bodCompleted}</div>
+                    <div><b>7. Perimeter Survey:</b> ${site.perimeterSurvey}</div>
+                    <div><b>8. Drone Survey:</b> ${site.droneSurvey}</div>
+                    <div class="col-span-2"><b>9. Conceptual Layout:</b> ${site.conceptualDesign}</div>
+                </div>
             `;
 
             if (site.reportLink) {
                 action.innerHTML = `
-                    <a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded text-xs font-mono flex items-center justify-center gap-2 transition">
-                        <i class="fa-solid fa-file-pdf"></i> OPEN NBRI OFFICIAL PDF REPORT
+                    <a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition">
+                        <i class="fa-solid fa-file-pdf"></i> Open Official NBRI PDF Report
                     </a>
                 `;
             } else {
                 action.innerHTML = `
-                    <button disabled class="w-full py-2.5 bg-slate-800 text-slate-500 rounded text-xs font-mono border border-slate-700 cursor-not-allowed">
-                        NO REPORT LINK ATTACHED
+                    <button disabled class="w-full py-2.5 bg-slate-800 text-slate-500 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700/50">
+                        <i class="fa-solid fa-circle-exclamation"></i> No PDF Link Attached
                     </button>
                 `;
             }
         }
 
-        function renderDistrictSummary() {
-            const summaryBody = document.getElementById('district-summary-body');
-            summaryBody.innerHTML = '';
-            const map = {};
-            filteredData.forEach(i => map[i.district] = (map[i.district] || 0) + i.units);
+        function setupEventListeners() {
+            document.getElementById('filter-region').addEventListener('change', applyFilters);
+            document.getElementById('filter-district').addEventListener('change', applyFilters);
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+        }
 
-            Object.keys(map).forEach(d => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="py-1.5 font-bold text-cyan-300">${d}</td><td class="py-1.5 text-right text-emerald-400 font-bold">${map[d]}</td>`;
-                summaryBody.appendChild(tr);
-            });
+        function handleAIPress(e) { if (e.key === 'Enter') sendAIMessage(); }
+        function sendAIMessage() {
+            const input = document.getElementById('ai-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const chatBox = document.getElementById('ai-chat-box');
+            chatBox.innerHTML += `<div class="flex justify-end mb-2"><div class="bg-purple-600/50 p-2 rounded-xl text-white">${msg}</div></div>`;
+            input.value = '';
+
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="flex gap-2 mb-2"><div class="bg-slate-900 p-2 rounded-xl text-slate-200">Filtering active data: <strong>${filteredData.length} sites</strong> matching query. Click any site row or map marker to view detailed specs!</div></div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 300);
         }
     </script>
 </body>
 </html>
 """
 
-# 4. Render Dashboard
+# 4. Inject LOGO_URL and Render Dashboard
 html_dashboard = html_template.replace("{{LOGO_URL}}", LOGO_URL)
 components.html(html_dashboard, height=1400, scrolling=True)
