@@ -363,39 +363,39 @@ html_template = """
             box-shadow: 0 0 10px #64748b, 0 0 20px #64748b;
             animation: pulse-slate 2s infinite;
         }
-        /* Stage 1: NBRI 1st Report Issued only */
+        /* Stage 1: NBRI 1st Report Issued only - Dark Blue */
         .glowing-pin.stage-1 {
-            background: #06b6d4;
-            box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
-            animation: pulse-cyan 2s infinite;
+            background: #1d4ed8;
+            box-shadow: 0 0 10px #1d4ed8, 0 0 20px #1d4ed8;
+            animation: pulse-stage1 2s infinite;
         }
-        /* Stage 2: NBRI 1st Report Issued + BOD Completed */
+        /* Stage 2: NBRI 1st Report Issued + BOD Completed - Light Blue */
         .glowing-pin.stage-2 {
-            background: #3b82f6;
-            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
-            animation: pulse-blue 2s infinite;
+            background: #38bdf8;
+            box-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;
+            animation: pulse-stage2 2s infinite;
         }
-        /* Stage 3: NBRI 1st Report Issued + BOD Completed + NBRI 2nd Report Issued */
+        /* Stage 3: NBRI 1st Report Issued + BOD Completed + NBRI 2nd Report Issued - Gold/Yellow */
         .glowing-pin.stage-3 {
-            background: #10b981;
-            box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
-            animation: pulse-green 2s infinite;
+            background: #eab308;
+            box-shadow: 0 0 10px #eab308, 0 0 20px #eab308;
+            animation: pulse-stage3 2s infinite;
         }
 
-        @keyframes pulse-cyan {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        @keyframes pulse-stage1 {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(29, 78, 216, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
         }
-        @keyframes pulse-blue {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        @keyframes pulse-stage2 {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(56, 189, 248, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
         }
-        @keyframes pulse-green {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        @keyframes pulse-stage3 {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(234, 179, 8, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
         }
         @keyframes pulse-slate {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(100, 116, 139, 0.8); }
@@ -547,6 +547,7 @@ html_template = """
                 <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
                     <div id="kpi-report-bar" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full w-0 transition-all duration-700"></div>
                 </div>
+                <p id="kpi-report-units" class="text-[11px] text-slate-500 mt-2">NBRI 1st Report - Units: 0</p>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/40 transition">
@@ -561,6 +562,7 @@ html_template = """
                     <span id="kpi-conceptual-pct" class="text-xs text-indigo-400 font-semibold">--%</span>
                 </div>
                 <p id="kpi-conceptual-detail" class="text-[11px] text-slate-500 mt-2">Conceptual subdivision layout status</p>
+                <p id="kpi-conceptual-units" class="text-[11px] text-slate-500 mt-1">NBRI Conceptual Design - Units: 0</p>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/40 transition">
@@ -575,6 +577,7 @@ html_template = """
                     <span id="kpi-bod-pct" class="text-xs text-emerald-400 font-semibold">--%</span>
                 </div>
                 <p class="text-[11px] text-slate-500 mt-2">Clearance & construction handovers</p>
+                <p id="kpi-bod-units" class="text-[11px] text-slate-500 mt-1">BOD Marked on Ground: 0</p>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-amber-500/40 transition">
@@ -591,6 +594,7 @@ html_template = """
                 <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
                     <div id="kpi-report2-bar" class="bg-gradient-to-r from-amber-500 to-orange-500 h-full w-0 transition-all duration-700"></div>
                 </div>
+                <p id="kpi-report2-units" class="text-[11px] text-slate-500 mt-2">NBRI 2nd Report - Units: 0</p>
             </div>
         </section>
 
@@ -613,9 +617,9 @@ html_template = """
                     </div>
                     <div class="flex flex-wrap items-center gap-3 mb-3 text-[11px] text-slate-300">
                         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#64748b;"></span> No Reports Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#06b6d4;"></span> NBRI 1st Report Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#3b82f6;"></span> NBRI 1st Report Issued + BOD Completed</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#10b981;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#1d4ed8;"></span> NBRI 1st Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#38bdf8;"></span> NBRI 1st Report Issued + BOD Completed</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#eab308;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
                     </div>
                     <div class="w-full h-[450px] rounded-xl overflow-hidden relative border border-slate-800 shadow-2xl" id="map-container">
                         <div id="map" class="w-full h-full z-10"></div>
@@ -642,12 +646,19 @@ html_template = """
                 </div>
 
                 <!-- MAIN SITE DETAILS TABLE -->
-                <div class="glass-panel rounded-2xl p-5 overflow-hidden">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="glass-panel rounded-2xl p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
                             <i class="fa-solid fa-table-cells text-purple-400 text-sm"></i> Resettlement Site Details Registry
                         </h3>
-                        <div class="text-xs text-slate-400" id="table-count">Showing 0 sites</div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative w-56">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="registry-search" autocomplete="off" placeholder="Search site or location..." class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-4 py-2 rounded-xl border border-slate-700 focus:border-purple-500 focus:outline-none placeholder-slate-500">
+                                <div id="registry-search-results" class="hidden absolute z-30 top-full left-0 right-0 mt-1.5 bg-slate-900/98 border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto"></div>
+                            </div>
+                            <div class="text-xs text-slate-400 whitespace-nowrap" id="table-count">Showing 0 sites</div>
+                        </div>
                     </div>
                     
                     <div class="max-h-[380px] overflow-y-auto pr-1 border border-slate-800/80 rounded-xl">
@@ -707,47 +718,45 @@ html_template = """
                     </div>
                 </div>
 
+                <!-- HSPTD AI ASSISTANT (placed directly below Conceptual Land Subdivision Layout) -->
+                <div class="glass-panel-glow rounded-2xl p-6 flex flex-col shadow-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-sm shadow-lg shadow-purple-500/30">
+                                <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                    HSPTD AI Assistant
+                                    <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">Smart Query Engine</span>
+                                </h3>
+                                <p class="text-xs text-purple-300">Ask any query regarding estate resettlement, report links, or district statistics</p>
+                            </div>
+                        </div>
+                        <button onclick="clearAIChat()" class="text-xs text-slate-400 hover:text-slate-200 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Clear Chat
+                        </button>
+                    </div>
+
+                    <div id="ai-chat-box" class="h-[220px] overflow-y-auto space-y-3 p-4 bg-slate-950/90 rounded-xl border border-slate-800/90 text-xs mb-4 scroll-smooth">
+                        <div class="flex gap-3">
+                            <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold shadow-md shadow-purple-500/20">AI</div>
+                            <div class="bg-slate-900/90 text-slate-200 p-3 rounded-2xl border border-slate-800 max-w-[85%] leading-relaxed">
+                                <strong>Ayubowan!</strong> Welcome to the HSPTD AI Assistant. Ask me anything about estate site locations, district breakdown, BOD clearances, or direct report links in the drive!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative flex items-center">
+                        <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Type your query..." class="w-full bg-slate-900/95 text-xs text-slate-200 pl-4 pr-12 py-3 rounded-xl border border-slate-700/80 focus:border-purple-500 focus:outline-none shadow-inner placeholder-slate-500">
+                        <button onclick="sendAIMessage()" class="absolute right-3 text-purple-400 hover:text-purple-300 p-2 transition transform active:scale-95">
+                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <!-- BOTTOM SECTION: HSPTD AI ASSISTANT -->
-        <section class="mt-8">
-            <div class="glass-panel-glow rounded-2xl p-6 flex flex-col shadow-2xl">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-sm shadow-lg shadow-purple-500/30">
-                            <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                HSPTD AI Assistant
-                                <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">Smart Query Engine</span>
-                            </h3>
-                            <p class="text-xs text-purple-300">Ask any query regarding estate resettlement, report links, or district statistics</p>
-                        </div>
-                    </div>
-                    <button onclick="clearAIChat()" class="text-xs text-slate-400 hover:text-slate-200 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 transition">
-                        <i class="fa-solid fa-trash-can mr-1"></i> Clear Chat
-                    </button>
-                </div>
-
-                <div id="ai-chat-box" class="h-[220px] overflow-y-auto space-y-3 p-4 bg-slate-950/90 rounded-xl border border-slate-800/90 text-xs mb-4 scroll-smooth">
-                    <div class="flex gap-3">
-                        <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold shadow-md shadow-purple-500/20">AI</div>
-                        <div class="bg-slate-900/90 text-slate-200 p-3 rounded-2xl border border-slate-800 max-w-[85%] leading-relaxed">
-                            <strong>Ayubowan!</strong> Welcome to the HSPTD AI Assistant. Ask me anything about estate site locations, district breakdown, BOD clearances, or direct report links in the drive!
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative flex items-center">
-                    <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Type your query (e.g., 'Show details for Niriella', 'Which district has highest housing units?')..." class="w-full bg-slate-900/95 text-xs text-slate-200 pl-4 pr-12 py-3 rounded-xl border border-slate-700/80 focus:border-purple-500 focus:outline-none shadow-inner placeholder-slate-500">
-                    <button onclick="sendAIMessage()" class="absolute right-3 text-purple-400 hover:text-purple-300 p-2 transition transform active:scale-95">
-                        <i class="fa-solid fa-paper-plane text-sm"></i>
-                    </button>
-                </div>
-            </div>
-        </section>
 
     </main>
 
@@ -767,6 +776,7 @@ html_template = """
 
         let rawData = [];
         let filteredData = [];
+        let registrySearchTerm = '';
         let mapInstance = null;
         let markersGroup = null;
         let districtGeoJsonLayer = null;
@@ -919,6 +929,12 @@ html_template = """
             });
         }
 
+        function parseUnitsValue(raw) {
+            if (raw === undefined || raw === null) return 0;
+            const cleaned = String(raw).replace(/[^0-9]/g, '');
+            return parseInt(cleaned) || 0;
+        }
+
         function processCSVRows(rows) {
             rawData = rows.map((r, idx) => {
                 const region = r['Region'] || r['region'] || 'Rathnapura';
@@ -934,12 +950,16 @@ html_template = """
 
                 const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
+                const reportUnits = parseUnitsValue(r['NBRI 1st Report - Units'] || r['NBRI 1st Report Units']);
                 const bodCompleted = (r['BOD Completed'] || 'No').trim();
+                const bodMarkedUnits = parseUnitsValue(r['BOD Marked on Ground'] || r['BOD Marked On Ground'] || r['BOD Morked on Ground']);
                 const perimeterSurvey = r['Perimeter Survey'] || 'Yes';
                 const droneSurvey = r['Drone Survey'] || 'Completed';
                 const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
+                const conceptualUnits = parseUnitsValue(r['NBRI Conceptual Design - Units'] || r['NBRI Conceptual Design Units']);
                 const report2Issued = (r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued'] || 'No').trim();
                 const report2Year = r['NBRI 2nd Report - Year '] || r['NBRI 2nd Report - Year'] || '';
+                const report2Units = parseUnitsValue(r['NBRI 2nd Report - Units'] || r['NBRI 2nd Report Units']);
                 
                 // Directly capture raw link from spreadsheet cell (handles SharePoint / Drive / Web URLs)
                 const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link'] || '';
@@ -951,8 +971,8 @@ html_template = """
 
                 return { 
                     sno: idx + 1, region, district, estate, division, ia, rpc, units, 
-                    reportIssued, reportYear, bodCompleted, perimeterSurvey, droneSurvey, 
-                    conceptualDesign, report2Issued, report2Year, reportLinkRaw, reportLink, lat, lng 
+                    reportIssued, reportYear, reportUnits, bodCompleted, bodMarkedUnits, perimeterSurvey, droneSurvey, 
+                    conceptualDesign, conceptualUnits, report2Issued, report2Year, report2Units, reportLinkRaw, reportLink, lat, lng 
                 };
             });
 
@@ -1045,6 +1065,17 @@ html_template = """
             document.getElementById('kpi-report2-issued').textContent = report2IssuedCount;
             document.getElementById('kpi-report2-pct').textContent = `${report2Pct}%`;
             document.getElementById('kpi-report2-bar').style.width = `${report2Pct}%`;
+
+            // Unit-level detail drawn from the corresponding "- Units" / ground-marking columns
+            const reportUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.reportUnits || 0), 0);
+            const conceptualUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.conceptualUnits || 0), 0);
+            const bodMarkedUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.bodMarkedUnits || 0), 0);
+            const report2UnitsSum = filteredData.reduce((acc, curr) => acc + (curr.report2Units || 0), 0);
+
+            document.getElementById('kpi-report-units').textContent = `NBRI 1st Report - Units: ${reportUnitsSum.toLocaleString()}`;
+            document.getElementById('kpi-conceptual-units').textContent = `NBRI Conceptual Design - Units: ${conceptualUnitsSum.toLocaleString()}`;
+            document.getElementById('kpi-bod-units').textContent = `BOD Marked on Ground: ${bodMarkedUnitsSum.toLocaleString()}`;
+            document.getElementById('kpi-report2-units').textContent = `NBRI 2nd Report - Units: ${report2UnitsSum.toLocaleString()}`;
         }
 
         function updateMapMarkers(selectedDistrict) {
@@ -1254,9 +1285,12 @@ html_template = """
         function renderMainTable() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
-            document.getElementById('table-count').textContent = `Showing ${filteredData.length} sites`;
+            const registryRows = getRegistryMatches();
+            document.getElementById('table-count').textContent = registrySearchTerm
+                ? `Showing ${registryRows.length} of ${filteredData.length} sites`
+                : `Showing ${filteredData.length} sites`;
 
-            filteredData.forEach(row => {
+            registryRows.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
                 
@@ -1379,6 +1413,70 @@ html_template = """
             document.getElementById('filter-ia').addEventListener('change', applyFilters);
             document.getElementById('filter-rpc').addEventListener('change', applyFilters);
             document.getElementById('search-input').addEventListener('input', applyFilters);
+
+            const registrySearchInput = document.getElementById('registry-search');
+            registrySearchInput.addEventListener('input', handleRegistrySearchInput);
+            registrySearchInput.addEventListener('focus', renderRegistrySearchSuggestions);
+            document.addEventListener('click', (e) => {
+                const box = document.getElementById('registry-search-results');
+                if (box && !box.contains(e.target) && e.target !== registrySearchInput) {
+                    box.classList.add('hidden');
+                }
+            });
+        }
+
+        // Local search scoped to the Resettlement Site Details Registry table only.
+        // Lets the user find and select a specific site/location without touching the
+        // global region/district/IA/RPC filters above the map.
+        function handleRegistrySearchInput() {
+            registrySearchTerm = document.getElementById('registry-search').value.toLowerCase().trim();
+            renderMainTable();
+            renderRegistrySearchSuggestions();
+        }
+
+        function getRegistryMatches() {
+            if (!registrySearchTerm) return filteredData;
+            return filteredData.filter(item =>
+                (item.estate || '').toLowerCase().includes(registrySearchTerm) ||
+                (item.division || '').toLowerCase().includes(registrySearchTerm) ||
+                (item.district || '').toLowerCase().includes(registrySearchTerm) ||
+                (item.region || '').toLowerCase().includes(registrySearchTerm)
+            );
+        }
+
+        function renderRegistrySearchSuggestions() {
+            const box = document.getElementById('registry-search-results');
+            if (!box) return;
+            if (!registrySearchTerm) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+
+            const matches = getRegistryMatches().slice(0, 8);
+            if (matches.length === 0) {
+                box.innerHTML = `<div class="px-3 py-2.5 text-[11px] text-slate-500 italic">No matching site or location found</div>`;
+                box.classList.remove('hidden');
+                return;
+            }
+
+            box.innerHTML = matches.map(site => `
+                <div class="px-3 py-2 text-[11px] text-slate-200 hover:bg-purple-500/20 cursor-pointer border-b border-slate-800/60 last:border-b-0" data-sno="${site.sno}">
+                    <span class="font-semibold text-cyan-300">${site.estate}</span>
+                    <span class="text-slate-400"> — ${site.division}, ${site.district}</span>
+                </div>
+            `).join('');
+            box.classList.remove('hidden');
+
+            box.querySelectorAll('[data-sno]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const sno = parseInt(el.getAttribute('data-sno'));
+                    const site = filteredData.find(s => s.sno === sno);
+                    if (site) {
+                        selectSiteRow(site);
+                        document.getElementById('registry-search').value = site.estate;
+                        registrySearchTerm = site.estate.toLowerCase();
+                        renderMainTable();
+                    }
+                    box.classList.add('hidden');
+                });
+            });
         }
 
         function handleAIPress(e) { if (e.key === 'Enter') sendAIMessage(); }
