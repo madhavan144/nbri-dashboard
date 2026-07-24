@@ -1,7 +1,9 @@
-import streamlit as st # type: ignore[import-not-found]
-import streamlit.components.v1 as components # type: ignore[import-not-found]
+import streamlit as st
+import streamlit.components.v1 as components
 
-# 1. Page Configuration
+# ==========================================
+# 1. PAGE CONFIGURATION
+# ==========================================
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
 
 st.set_page_config(
@@ -11,7 +13,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. CSS Reset for Full-screen Dashboard Layout
+# ==========================================
+# 2. CSS STYLING & FULLSCREEN OVERRIDE
+# ==========================================
 st.markdown("""
     <style>
         .block-container {
@@ -30,7 +34,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. HTML, CSS, JS Integrated Dashboard Template
+# ==========================================
+# 3. HTML, CSS, JS INTEGRATED DASHBOARD TEMPLATE
+# ==========================================
 html_template = """
 <!DOCTYPE html>
 <html lang="en">
@@ -411,7 +417,7 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- SELECTED SITE REPORT VIEWER & DETAILS CARD -->
+                <!-- SELECTED SITE REPORT VIEWER & 10 KEY DETAILS CARD -->
                 <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between">
                     <div>
                         <div class="flex items-center justify-between mb-3">
@@ -421,7 +427,7 @@ html_template = """
                             <span class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">Detailed Specs</span>
                         </div>
                         <div id="report-card-content" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-2">
-                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full technical parameters and NBRI PDF report link here.</p>
+                            <p class="text-slate-400 italic">Click on any site row in the table or map pin to inspect its full 10 key technical parameters and NBRI PDF report link here.</p>
                         </div>
                     </div>
                     <div id="report-card-action" class="mt-4">
@@ -444,7 +450,6 @@ html_template = """
         let mapInstance = null;
         let markersGroup = null;
         let districtHighlightLayer = null;
-        let geojsonBoundaryLayer = null;
         let subdivisionChartInstance = null;
 
         const districtCoordinates = {
@@ -471,41 +476,15 @@ html_template = """
         });
 
         function initMap() {
-            mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([7.8731, 80.7718], 8);
+            mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([6.9, 80.6], 8);
             
-            // 1. CARTO Flatblue Tile Layer (as requested)
-            L.tileLayer('https://cartocdn_{s}.global.ssl.fastly.net/base-flatblue/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 18,
-                subdomains: 'abcd',
-                attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+                subdomains: 'abcd'
             }).addTo(mapInstance);
 
             markersGroup = L.layerGroup().addTo(mapInstance);
             districtHighlightLayer = L.layerGroup().addTo(mapInstance);
-
-            // Load Sri Lanka GeoJSON Boundaries with Glow Effect Overlay
-            loadSriLankaAdminBoundaries();
-        }
-
-        function loadSriLankaAdminBoundaries() {
-            fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
-                .then(response => response.json())
-                .then(data => {
-                    geojsonBoundaryLayer = L.geoJSON(data, {
-                        filter: function(feature) {
-                            return feature.properties.ADMIN === "Sri Lanka" || feature.properties.ISO_A3 === "LKA";
-                        },
-                        style: {
-                            color: '#06b6d4',
-                            weight: 2.5,
-                            opacity: 0.85,
-                            fillColor: '#080a14',
-                            fillOpacity: 0.15,
-                            dashArray: '3, 6'
-                        }
-                    }).addTo(mapInstance);
-                })
-                .catch(err => console.log('Admin boundary load error:', err));
         }
 
         function fetchCSVData() {
@@ -547,9 +526,8 @@ html_template = """
                 const droneSurvey = r['Drone Survey'] || 'Completed';
                 const conceptualDesign = (r['NBRI Conceptual Design'] || 'In Progress').trim();
                 
-                // Smart Link Extraction handling Google Sheet hyperlink texts
                 const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || '';
-                const reportLink = formatReportURL(reportLinkRaw, estate, district);
+                const reportLink = formatReportURL(reportLinkRaw, estate);
 
                 let baseCoords = districtCoordinates[district] || { lat: 6.68, lng: 80.39 };
                 let lat = parseFloat(r['Lat'] || r['Latitude']) || (baseCoords.lat + (Math.random() - 0.5) * 0.12);
@@ -566,14 +544,11 @@ html_template = """
             applyFilters();
         }
 
-        // Smart Report Link Parser to handle cell hyperlink text and direct URLs
-        function formatReportURL(rawLink, estateName, districtName) {
+        function formatReportURL(rawLink, estateName) {
             if (!rawLink || rawLink.trim() === '' || rawLink.trim() === '-') return '';
             let cleaned = rawLink.trim();
             if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
-            
-            // Constructs lookup search for Google Drive / Sharepoint linked reports
-            return `https://www.google.com/search?q=${encodeURIComponent('NBRO NBRI Report ' + cleaned + ' ' + estateName + ' ' + districtName)}`;
+            return `https://www.google.com/search?q=NBRI+Report+${encodeURIComponent(cleaned)}+${encodeURIComponent(estateName)}`;
         }
 
         function populateFilterDropdowns() {
@@ -679,18 +654,17 @@ html_template = """
 
             const districtTag = document.getElementById('district-tag');
 
-            // Glowing Boundary Ring on District Selection
             if (selectedDistrict !== 'ALL' && districtCoordinates[selectedDistrict]) {
                 const coords = districtCoordinates[selectedDistrict];
                 districtTag.classList.remove('hidden');
                 
                 L.circle([coords.lat, coords.lng], {
-                    color: '#a855f7',
-                    fillColor: '#06b6d4',
-                    fillOpacity: 0.25,
-                    radius: 15000,
+                    color: '#38bdf8',
+                    fillColor: '#0284c7',
+                    fillOpacity: 0.22,
+                    radius: 14000,
                     weight: 3,
-                    dashArray: '6, 6'
+                    dashArray: '8, 8'
                 }).addTo(districtHighlightLayer);
 
                 if (mapInstance) mapInstance.flyTo([coords.lat, coords.lng], 10, { duration: 1.2 });
@@ -725,10 +699,13 @@ html_template = """
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>1. Division:</b> ${site.division}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>2. Region / District:</b> ${site.region} / ${site.district}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>3. IA:</b> <span style="color:#a855f7; font-weight:700;">${site.ia}</span></p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. Capacity:</b> <span style="color:#34d399; font-weight:700;">${site.units} Units</span></p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. Report Status:</b> ${site.reportIssued} (${site.reportYear})</p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. BOD Clearance:</b> ${site.bodCompleted}</p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:4px 0 0 0;"><b>7. Report Document:</b></p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. Planned Capacity:</b> <span style="color:#34d399; font-weight:700;">${site.units} Units</span></p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. NBRI 1st Report:</b> ${site.reportIssued} (${site.reportYear})</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. Perimeter Survey:</b> ${site.perimeterSurvey}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>7. Drone Survey:</b> ${site.droneSurvey}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>8. Conceptual Subdivision:</b> ${site.conceptualDesign}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>9. BOD Clearance:</b> ${site.bodCompleted}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:4px 0 0 0;"><b>10. Report Document:</b></p>
                         ${linkButton}
                     </div>
                 `);
@@ -817,18 +794,7 @@ html_template = """
 
         function selectSiteRow(site) {
             if (mapInstance && site.lat && site.lng) {
-                mapInstance.setView([site.lat, site.lng], 12);
-
-                // Highlight Selected Site District Boundary Ring
-                districtHighlightLayer.clearLayers();
-                L.circle([site.lat, site.lng], {
-                    color: '#06b6d4',
-                    fillColor: '#a855f7',
-                    fillOpacity: 0.2,
-                    radius: 8000,
-                    weight: 2,
-                    dashArray: '4, 4'
-                }).addTo(districtHighlightLayer);
+                mapInstance.setView([site.lat, site.lng], 13);
             }
 
             const content = document.getElementById('report-card-content');
@@ -893,6 +859,8 @@ html_template = """
 </html>
 """
 
-# 4. Inject LOGO_URL and Render Dashboard
+# ==========================================
+# 4. STREAMLIT RENDER
+# ==========================================
 html_dashboard = html_template.replace("{{LOGO_URL}}", LOGO_URL)
 components.html(html_dashboard, height=1400, scrolling=True)
