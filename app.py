@@ -452,7 +452,7 @@ html_template = """
             transition: all 0.4s ease-in-out;
         }
         .district-boundary-active {
-            filter: drop-shadow(0px 0px 12px #a855f7) drop-shadow(0px 0px 25px #06b6d4);
+            filter: drop-shadow(0px 0px 12px #4ade80) drop-shadow(0px 0px 25px #4ade80);
             transition: all 0.4s ease-in-out;
         }
         .country-border-glow {
@@ -935,10 +935,10 @@ html_template = """
 
             if (selected !== 'all' && shapeName && shapeName.includes(selected)) {
                 return {
-                    color: '#a855f7',
+                    color: '#4ade80',
                     weight: 3,
                     opacity: 0.95,
-                    fillColor: '#a855f7',
+                    fillColor: '#4ade80',
                     fillOpacity: 0.25,
                     className: 'district-boundary-active'
                 };
@@ -956,8 +956,7 @@ html_template = """
 
         function onEachDistrictFeature(feature, layer) {
             const dName = feature.properties.shapeName || feature.properties.NAME_2 || feature.properties.district || feature.properties.DISTRICT || feature.properties.name || 'District';
-            layer.bindTooltip(`<b>${dName} District</b>`, { sticky: true, className: 'custom-tooltip' });
-            
+
             layer.on({
                 click: (e) => {
                     const distSelect = document.getElementById('filter-district');
