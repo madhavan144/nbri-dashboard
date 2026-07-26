@@ -11,7 +11,7 @@ from datetime import datetime
 # 1. PAGE CONFIGURATION
 # ==========================================
 LOGO_URL = "https://96legendssquare.com/wp-content/uploads/2025/08/National-Building-Research-Organization-NBRO.webp"
-BG_IMAGE_URL = "https://images.unsplash.com/photo-1625337905916-f1172a75d5b8?fm=jpg&q=80&w=1920&auto=format&fit=crop"
+BG_IMAGE_URL = "https://images.unsplash.com/photo-1723369962563-5e873df9b93b?fm=jpg&q=80&w=1920&auto=format&fit=crop"
 
 st.set_page_config(
     page_title="IHP Resettlement Progress Dashboard",
@@ -69,11 +69,33 @@ DISTRICT_GEOJSON_JS = json.dumps(DISTRICT_GEOJSON_DATA) if DISTRICT_GEOJSON_DATA
 # ==========================================
 # 2c. LOGIN / SIGNUP GATE
 # ==========================================
+USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users_store.json")
+
+def load_users_from_disk():
+    """Loads previously signed-up accounts from disk so they persist across
+    browser sessions/reloads instead of resetting every time."""
+    try:
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, dict) and data:
+                return data
+    except Exception:
+        pass
+    return {"admin": "admin123"}
+
+def save_users_to_disk(users):
+    try:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f)
+    except Exception:
+        pass
+
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "users" not in st.session_state:
-    # Demo in-memory user store. Replace with a real database/auth provider for production.
-    st.session_state.users = {"admin": "admin123"}
+    # Persisted to USERS_FILE on disk, so an account created once can log back in
+    # any time afterwards instead of needing to sign up again each session.
+    st.session_state.users = load_users_from_disk()
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
 if "current_user" not in st.session_state:
@@ -164,6 +186,7 @@ def render_login_gate():
                         st.error("That username is already taken.")
                     else:
                         st.session_state.users[new_user] = new_pass
+                        save_users_to_disk(st.session_state.users)
                         st.success("Account created! Please log in from the Login tab.")
 
     st.caption("Demo credentials: admin / admin123 (replace with real authentication before production use).")
@@ -356,51 +379,55 @@ html_template = """
 
         .glowing-pin {
             display: block;
-            width: 14px;
-            height: 14px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
-            background: #64748b;
-            box-shadow: 0 0 10px #64748b, 0 0 20px #64748b;
+            background: #94a3b8;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 8px #94a3b8, 0 0 16px #94a3b8;
             animation: pulse-slate 2s infinite;
         }
-        /* Stage 1: NBRI 1st Report Issued only */
+        /* Stage 1: NBRI 1st Report Issued only - Royal Blue */
         .glowing-pin.stage-1 {
-            background: #06b6d4;
-            box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
-            animation: pulse-cyan 2s infinite;
+            background: #2563eb;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 10px #2563eb, 0 0 22px #2563eb;
+            animation: pulse-stage1 2s infinite;
         }
-        /* Stage 2: NBRI 1st Report Issued + BOD Completed */
+        /* Stage 2: NBRI 1st Report Issued + BOD Completed - Hot Pink/Magenta */
         .glowing-pin.stage-2 {
-            background: #f59e0b;
-            box-shadow: 0 0 10px #f59e0b, 0 0 20px #f59e0b;
-            animation: pulse-amber 2s infinite;
+            background: #ec4899;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 10px #ec4899, 0 0 22px #ec4899;
+            animation: pulse-stage2 2s infinite;
         }
-        /* Stage 3: NBRI 1st Report Issued + BOD Completed + NBRI 2nd Report Issued */
+        /* Stage 3: NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued - Vivid Gold */
         .glowing-pin.stage-3 {
-            background: #10b981;
-            box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
-            animation: pulse-green 2s infinite;
+            background: #facc15;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 10px #facc15, 0 0 22px #facc15;
+            animation: pulse-stage3 2s infinite;
         }
 
-        @keyframes pulse-cyan {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        @keyframes pulse-stage1 {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
-        @keyframes pulse-amber {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        @keyframes pulse-stage2 {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(236, 72, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
         }
-        @keyframes pulse-green {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        @keyframes pulse-stage3 {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(250, 204, 21, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
         }
         @keyframes pulse-slate {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(100, 116, 139, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(100, 116, 139, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(100, 116, 139, 0); }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(148, 163, 184, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(148, 163, 184, 0); }
         }
 
         .leaflet-container {
@@ -652,10 +679,10 @@ html_template = """
                         </span>
                     </div>
                     <div class="flex flex-wrap items-center gap-3 mb-3 text-[11px] text-slate-300">
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#64748b;"></span> No Reports Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#06b6d4;"></span> NBRI 1st Report Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#f59e0b;"></span> NBRI 1st Report Issued + BOD Completed</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#10b981;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#94a3b8;"></span> No Reports Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#2563eb;"></span> NBRI 1st Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#ec4899;"></span> NBRI 1st Report Issued + BOD Completed</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#facc15;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
                     </div>
                     <div class="w-full h-[450px] rounded-xl overflow-hidden relative border border-slate-800 shadow-2xl" id="map-container">
                         <div id="map" class="w-full h-full z-10"></div>
@@ -697,8 +724,8 @@ html_template = """
                         </div>
                     </div>
                     
-                    <div class="max-h-[380px] overflow-y-auto pr-1 border border-slate-800/80 rounded-xl">
-                        <table class="w-full text-left text-xs text-slate-300">
+                    <div class="max-h-[380px] overflow-y-auto overflow-x-auto pr-1 border border-slate-800/80 rounded-xl">
+                        <table class="w-full min-w-[720px] text-left text-xs text-slate-300">
                             <thead class="bg-slate-900/95 sticky top-0 z-20 text-slate-400 font-semibold uppercase border-b border-slate-800 backdrop-blur-md">
                                 <tr>
                                     <th class="py-3 px-3">S.No</th>
@@ -731,6 +758,7 @@ html_template = """
                             </h3>
                             <span id="discussion-site-tag" class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2.5 py-1 rounded-lg border border-cyan-500/30 font-semibold">No Site Selected</span>
                         </div>
+                        <div id="site-progress-strip" class="hidden grid grid-cols-4 gap-1.5 mb-3"></div>
                         <div id="discussion-thread" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-3 h-[220px] overflow-y-auto">
                             <p class="text-slate-400 italic">Click on any site row in the table, or a map marker/district, to open its discussion thread and leave comments here.</p>
                         </div>
@@ -1171,8 +1199,8 @@ html_template = """
                 const customIcon = L.divIcon({
                     className: 'custom-pin-wrapper',
                     html: `<span class="glowing-pin ${pinClass}"></span>`,
-                    iconSize: [14, 14],
-                    iconAnchor: [7, 7]
+                    iconSize: [19, 19],
+                    iconAnchor: [9, 9]
                 });
 
                 const marker = L.marker([site.lat, site.lng], { icon: customIcon });
@@ -1420,7 +1448,28 @@ html_template = """
             document.getElementById('discussion-input').placeholder = 'Add a comment about this site...';
             document.getElementById('discussion-send').disabled = false;
 
+            renderSiteProgressStrip(site);
             renderDiscussionThread();
+        }
+
+        function renderSiteProgressStrip(site) {
+            const strip = document.getElementById('site-progress-strip');
+            if (!strip) return;
+
+            const steps = [
+                { label: '1st Report', done: (site.reportIssued || '').toLowerCase() === 'yes' },
+                { label: 'BOD', done: (site.bodCompleted || '').toLowerCase() === 'yes' },
+                { label: 'Concept Plan', done: (site.conceptualDesign || '').toLowerCase().includes('completed') },
+                { label: '2nd Report', done: (site.report2Issued || '').toLowerCase() === 'yes' },
+            ];
+
+            strip.innerHTML = steps.map(s => `
+                <div class="rounded-lg px-1.5 py-2 text-center border ${s.done ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-slate-900/70 border-slate-800'}">
+                    <i class="fa-solid ${s.done ? 'fa-circle-check text-emerald-400' : 'fa-circle text-slate-600'} text-xs mb-1"></i>
+                    <div class="text-[9px] leading-tight ${s.done ? 'text-emerald-300' : 'text-slate-500'}">${s.label}</div>
+                </div>
+            `).join('');
+            strip.classList.remove('hidden');
         }
 
         function renderDiscussionThread() {
