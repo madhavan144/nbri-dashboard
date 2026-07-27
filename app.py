@@ -42,15 +42,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2b. LOAD LOCAL DISTRICT GEOJSON (uploaded layer sitting next to app.py)
+# 2b. LOAD LOCAL DISTRICT GEOJSON
 # ==========================================
 def load_local_district_geojson():
-    """
-    Looks for the district boundary geojson file uploaded to the repo, in the same
-    folder as this app.py. Update DISTRICT_GEOJSON_FILENAME below if you rename it.
-    Returns the parsed geojson as a Python object, or None if not found so the
-    dashboard can fall back to a remote boundary source instead.
-    """
     candidate_names = ["sri_lanka_districts.geojson", "sri_lanka_districts.geojson.json"]
     base_dir = os.path.dirname(os.path.abspath(__file__))
     for name in candidate_names:
@@ -72,8 +66,6 @@ DISTRICT_GEOJSON_JS = json.dumps(DISTRICT_GEOJSON_DATA) if DISTRICT_GEOJSON_DATA
 USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users_store.json")
 
 def load_users_from_disk():
-    """Loads previously signed-up accounts from disk so they persist across
-    browser sessions/reloads instead of resetting every time."""
     try:
         with open(USERS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -93,8 +85,6 @@ def save_users_to_disk(users):
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "users" not in st.session_state:
-    # Persisted to USERS_FILE on disk, so an account created once can log back in
-    # any time afterwards instead of needing to sign up again each session.
     st.session_state.users = load_users_from_disk()
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
@@ -105,7 +95,7 @@ def render_login_gate():
     st.markdown(f"""
         <style>
             .stApp {{
-                background: linear-gradient(rgba(4, 8, 20, 0.88), rgba(4, 8, 20, 0.92)), url('{BG_IMAGE_URL}');
+                background: linear-gradient(rgba(13, 12, 29, 0.92), rgba(19, 17, 44, 0.95)), url('{BG_IMAGE_URL}');
                 background-size: cover;
                 background-position: center;
                 background-attachment: fixed;
@@ -115,10 +105,10 @@ def render_login_gate():
                 margin: 6vh auto 2rem auto;
                 padding: 2.5rem 2.25rem;
                 border-radius: 20px;
-                background: rgba(15, 20, 38, 0.88);
-                border: 1px solid rgba(6, 182, 212, 0.25);
-                box-shadow: 0 20px 50px -15px rgba(0,0,0,0.7), 0 0 30px rgba(6, 182, 212, 0.08);
-                backdrop-filter: blur(10px);
+                background: rgba(19, 17, 44, 0.88);
+                border: 1px solid rgba(217, 70, 239, 0.3);
+                box-shadow: 0 20px 50px -15px rgba(0,0,0,0.8), 0 0 30px rgba(217, 70, 239, 0.15);
+                backdrop-filter: blur(16px);
                 text-align: center;
             }}
             .auth-wrapper img {{
@@ -135,7 +125,7 @@ def render_login_gate():
                 margin-bottom: 0.15rem;
             }}
             .auth-subtitle {{
-                color: #94a3b8;
+                color: #a78bfa;
                 font-size: 0.85rem;
                 margin-bottom: 1.5rem;
             }}
@@ -189,7 +179,7 @@ def render_login_gate():
                         save_users_to_disk(st.session_state.users)
                         st.success("Account created! Please log in from the Login tab.")
 
-    st.caption("Demo credentials: admin / admin123 (replace with real authentication before production use).")
+    st.caption("Demo credentials: admin / admin123")
 
 if not st.session_state.authenticated:
     render_login_gate()
@@ -200,7 +190,6 @@ if not st.session_state.authenticated:
 # ==========================================
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFPE1PkS8oObj7PuzcivONOj1Ma8avjhgDJmIbvo_5eTc7AgGHMRRjZNzKfpw3o2psI_jPppDHGSTM/pub?gid=2028064069&single=true&output=csv"
 
-# Columns that count as "important" when they change for an existing site
 WATCHED_FIELDS = [
     ("NBRI 1st Report - Issued", "NBRI 1st Report Issued"),
     ("BOD Completed", "BOD Completed"),
@@ -209,7 +198,6 @@ WATCHED_FIELDS = [
 ]
 
 def fetch_sheet_rows():
-    """Downloads and parses the published Google Sheet CSV. Returns a list of dict rows, or None on failure."""
     try:
         req = urllib.request.Request(SHEET_CSV_URL, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -241,8 +229,6 @@ def get_field_variants(field_label):
     return variants_map.get(field_label, [field_label])
 
 def check_for_sheet_updates(silent_baseline=False):
-    """Fetches the sheet, compares to the last known snapshot, and appends any
-    new/changed-site notifications to session_state.notifications."""
     rows = fetch_sheet_rows()
     if rows is None:
         return
@@ -285,7 +271,6 @@ if "notifications" not in st.session_state:
 if "show_notifications" not in st.session_state:
     st.session_state.show_notifications = False
 if "sheet_baseline_done" not in st.session_state:
-    # Establish a silent baseline on first load so we don't flag all existing rows as "new"
     check_for_sheet_updates(silent_baseline=True)
     st.session_state.sheet_baseline_done = True
 
@@ -323,14 +308,14 @@ html_template = """
                         sans: ['Plus Jakarta Sans', 'sans-serif'],
                     },
                     colors: {
-                        darkBg: '#080a14',
-                        cardBg: 'rgba(15, 20, 38, 0.85)',
-                        cardBorder: 'rgba(255, 255, 255, 0.08)',
-                        accentPurple: '#a855f7',
-                        accentBlue: '#3b82f6',
-                        accentCyan: '#06b6d4',
-                        accentGreen: '#10b981',
-                        accentAmber: '#f59e0b',
+                        darkBg: '#0b0a17',
+                        cardBg: 'rgba(21, 18, 43, 0.85)',
+                        cardBorder: 'rgba(217, 70, 239, 0.2)',
+                        neonMagenta: '#d946ef',
+                        neonCyan: '#06b6d4',
+                        neonOrange: '#f97316',
+                        neonGreen: '#10b981',
+                        neonYellow: '#facc15'
                     }
                 }
             }
@@ -340,26 +325,26 @@ html_template = """
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at 20% 20%, #0c1021 0%, #060810 60%, #020307 100%);
+            background: radial-gradient(circle at 50% 20%, #171330 0%, #0d0c1d 60%, #06050e 100%);
             background-attachment: fixed;
-            color: #e2e8f0;
+            color: #f1f5f9;
             margin: 0;
             padding: 0;
         }
 
         .glass-panel {
-            background: rgba(15, 21, 38, 0.85);
+            background: rgba(21, 18, 43, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
         }
 
         .glass-panel-glow {
-            background: rgba(20, 28, 50, 0.85);
+            background: rgba(28, 23, 58, 0.9);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(217, 70, 239, 0.4);
+            box-shadow: 0 0 25px rgba(217, 70, 239, 0.2);
         }
 
         ::-webkit-scrollbar {
@@ -367,14 +352,14 @@ html_template = """
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(13, 12, 29, 0.8);
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(100, 116, 139, 0.5);
+            background: rgba(217, 70, 239, 0.4);
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(6, 182, 212, 0.7);
+            background: rgba(6, 182, 212, 0.8);
         }
 
         .glowing-pin {
@@ -384,45 +369,42 @@ html_template = """
             border-radius: 50%;
             background: #94a3b8;
             border: 2px solid rgba(255,255,255,0.9);
-            box-shadow: 0 0 8px #94a3b8, 0 0 16px #94a3b8;
+            box-shadow: 0 0 8px #94a3b8;
             animation: pulse-slate 2s infinite;
         }
-        /* Stage 1: NBRI 1st Report Issued only - Royal Blue */
         .glowing-pin.stage-1 {
-            background: #2563eb;
+            background: #06b6d4;
             border: 2px solid rgba(255,255,255,0.9);
-            box-shadow: 0 0 10px #2563eb, 0 0 22px #2563eb;
-            animation: pulse-stage1 2s infinite;
+            box-shadow: 0 0 12px #06b6d4, 0 0 22px #06b6d4;
+            animation: pulse-cyan 2s infinite;
         }
-        /* Stage 2: NBRI 1st Report Issued + BOD Completed - Hot Pink/Magenta */
         .glowing-pin.stage-2 {
-            background: #ec4899;
+            background: #d946ef;
             border: 2px solid rgba(255,255,255,0.9);
-            box-shadow: 0 0 10px #ec4899, 0 0 22px #ec4899;
-            animation: pulse-stage2 2s infinite;
+            box-shadow: 0 0 12px #d946ef, 0 0 22px #d946ef;
+            animation: pulse-magenta 2s infinite;
         }
-        /* Stage 3: NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued - Vivid Gold */
         .glowing-pin.stage-3 {
-            background: #facc15;
+            background: #f97316;
             border: 2px solid rgba(255,255,255,0.9);
-            box-shadow: 0 0 10px #facc15, 0 0 22px #facc15;
-            animation: pulse-stage3 2s infinite;
+            box-shadow: 0 0 12px #f97316, 0 0 22px #f97316;
+            animation: pulse-orange 2s infinite;
         }
 
-        @keyframes pulse-stage1 {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        @keyframes pulse-cyan {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
         }
-        @keyframes pulse-stage2 {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(236, 72, 153, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        @keyframes pulse-magenta {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(217, 70, 239, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
         }
-        @keyframes pulse-stage3 {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.8); }
-            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(250, 204, 21, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+        @keyframes pulse-orange {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.8); }
+            70% { transform: scale(1.3); box-shadow: 0 0 0 12px rgba(249, 115, 22, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
         }
         @keyframes pulse-slate {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.8); }
@@ -431,51 +413,46 @@ html_template = """
         }
 
         .leaflet-container {
-            background: #050811 !important;
+            background: #090814 !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
         }
         .leaflet-popup-content-wrapper {
-            background: rgba(13, 18, 36, 0.95) !important;
+            background: rgba(21, 18, 43, 0.95) !important;
             color: #f8fafc !important;
-            border: 1px solid rgba(56, 189, 248, 0.4);
+            border: 1px solid rgba(217, 70, 239, 0.5);
             border-radius: 12px !important;
             backdrop-filter: blur(12px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         }
         .leaflet-popup-tip {
-            background: rgba(13, 18, 36, 0.95) !important;
+            background: rgba(21, 18, 43, 0.95) !important;
         }
 
-        /* Outline Glow Style for Boundaries */
-        .district-boundary-glow {
-            filter: drop-shadow(0px 0px 8px #06b6d4) drop-shadow(0px 0px 15px rgba(168, 85, 247, 0.6));
-            transition: all 0.4s ease-in-out;
-        }
         .district-boundary-active {
-            filter: drop-shadow(0px 0px 12px #4ade80) drop-shadow(0px 0px 25px #4ade80);
+            filter: drop-shadow(0px 0px 12px #d946ef) drop-shadow(0px 0px 25px #d946ef);
             transition: all 0.4s ease-in-out;
         }
         .country-border-glow {
-            filter: drop-shadow(0px 0px 6px #06b6d4) drop-shadow(0px 0px 14px rgba(6, 182, 212, 0.7));
+            filter: drop-shadow(0px 0px 8px #06b6d4) drop-shadow(0px 0px 16px rgba(6, 182, 212, 0.7));
         }
     </style>
 </head>
 <body class="min-h-screen pb-10">
 
     <!-- TOP NAVIGATION BAR -->
-    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800 px-6 py-3 mb-6">
+    <header class="sticky top-0 z-50 glass-panel border-b border-fuchsia-900/40 px-6 py-3 mb-6 shadow-lg shadow-fuchsia-950/20">
         <div class="max-w-[1750px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             
             <!-- LOGO & TITLE -->
             <div class="flex items-center gap-3.5">
-                <div id="logo-container" class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 p-1 flex items-center justify-center shadow-lg shadow-cyan-500/10 overflow-hidden">
+                <div id="logo-container" class="w-12 h-12 rounded-xl bg-slate-950 border border-fuchsia-500/40 p-1 flex items-center justify-center shadow-lg shadow-fuchsia-500/20 overflow-hidden">
                     <img src="{{LOGO_URL}}" alt="NBRO Logo" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold tracking-tight text-white">IHP 4700 RESETTLEMENT DASHBOARD</h1>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Tracker Sync
+                        <h1 class="text-xl font-extrabold tracking-tight text-white bg-gradient-to-r from-fuchsia-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">IHP 4700 RESETTLEMENT DASHBOARD</h1>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/30">
+                            <span class="w-2 h-2 rounded-full bg-fuchsia-400 animate-ping"></span> Live Tracker Sync
                         </span>
                     </div>
                     <p class="text-xs text-slate-400">Resettlement Progress & Spatial Monitoring of Plantation Sectors</p>
@@ -485,32 +462,32 @@ html_template = """
             <!-- FILTERS & RELOAD -->
             <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                 <div class="relative flex-1 md:flex-initial">
-                    <i class="fa-solid fa-layer-group absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <select id="filter-region" class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer">
+                    <i class="fa-solid fa-layer-group absolute left-3 top-1/2 -translate-y-1/2 text-fuchsia-400 text-xs"></i>
+                    <select id="filter-region" class="w-full bg-slate-950/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-fuchsia-500/30 focus:border-fuchsia-400 focus:outline-none appearance-none cursor-pointer">
                         <option value="ALL">Regions</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]"></i>
                 </div>
 
                 <div class="relative flex-1 md:flex-initial">
-                    <i class="fa-solid fa-map-location-dot absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <select id="filter-district" class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer">
+                    <i class="fa-solid fa-map-location-dot absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400 text-xs"></i>
+                    <select id="filter-district" class="w-full bg-slate-950/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-cyan-500/30 focus:border-cyan-400 focus:outline-none appearance-none cursor-pointer">
                         <option value="ALL">Districts</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]"></i>
                 </div>
 
                 <div class="relative flex-1 md:flex-initial">
-                    <i class="fa-solid fa-building-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <select id="filter-ia" class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer">
+                    <i class="fa-solid fa-building-user absolute left-3 top-1/2 -translate-y-1/2 text-orange-400 text-xs"></i>
+                    <select id="filter-ia" class="w-full bg-slate-950/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-orange-500/30 focus:border-orange-400 focus:outline-none appearance-none cursor-pointer">
                         <option value="ALL">IA</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]"></i>
                 </div>
 
                 <div class="relative flex-1 md:flex-initial">
-                    <i class="fa-solid fa-industry absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <select id="filter-rpc" class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer">
+                    <i class="fa-solid fa-industry absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 text-xs"></i>
+                    <select id="filter-rpc" class="w-full bg-slate-950/90 text-xs text-slate-200 pl-8 pr-8 py-2 rounded-xl border border-emerald-500/30 focus:border-emerald-400 focus:outline-none appearance-none cursor-pointer">
                         <option value="ALL">RPC</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]"></i>
@@ -518,10 +495,10 @@ html_template = """
 
                 <div class="relative flex-1 md:flex-initial">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" id="search-input" placeholder="Search estate or division..." class="w-full bg-slate-900/90 text-xs text-slate-200 pl-8 pr-4 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none placeholder-slate-500">
+                    <input type="text" id="search-input" placeholder="Search estate or division..." class="w-full bg-slate-950/90 text-xs text-slate-200 pl-8 pr-4 py-2 rounded-xl border border-slate-700 focus:border-fuchsia-400 focus:outline-none placeholder-slate-500">
                 </div>
 
-                <button onclick="fetchCSVData()" class="px-3.5 py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-xl text-xs font-medium transition flex items-center gap-2">
+                <button onclick="fetchCSVData()" class="px-3.5 py-2 bg-fuchsia-600/30 hover:bg-fuchsia-600/50 text-fuchsia-200 border border-fuchsia-500/40 rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-lg shadow-fuchsia-600/20">
                     <i id="sync-icon" class="fa-solid fa-arrows-rotate"></i> Reload Live CSV
                 </button>
             </div>
@@ -536,84 +513,84 @@ html_template = """
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 
             <!-- COMBINED SITES + UNITS BOX -->
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-cyan-500/40 transition">
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-cyan-500/60 transition shadow-lg hover:shadow-cyan-500/10">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Number of Sites</span>
-                    <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Number of Sites</span>
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-md shadow-cyan-500/20">
                         <i class="fa-solid fa-location-dot"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
                     <h2 id="kpi-total-sites" class="text-3xl font-extrabold text-white">--</h2>
-                    <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">Active Sites</span>
+                    <span class="text-xs text-cyan-400 font-semibold flex items-center gap-1">Active Sites</span>
                 </div>
                 <div class="border-t border-slate-800/80 my-3"></div>
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Number of Units Planned</span>
-                    <div class="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Units Planned</span>
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                         <i class="fa-solid fa-house-chimney"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
-                    <h2 id="kpi-total-units" class="text-3xl font-extrabold text-white">--</h2>
+                    <h2 id="kpi-total-units" class="text-3xl font-extrabold text-cyan-300">--</h2>
                     <span class="text-xs text-cyan-400 font-semibold">Housing Units</span>
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-purple-500/40 transition">
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-fuchsia-500/60 transition shadow-lg hover:shadow-fuchsia-500/10">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">NBRI 1st Report Issued</span>
-                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI 1st Report Issued</span>
+                    <div class="w-9 h-9 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400 shadow-md shadow-fuchsia-500/20">
                         <i class="fa-solid fa-file-shield"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
                     <h2 id="kpi-report-issued" class="text-3xl font-extrabold text-white">--</h2>
-                    <span id="kpi-report-pct" class="text-xs text-purple-400 font-semibold">--%</span>
+                    <span id="kpi-report-pct" class="text-xs text-fuchsia-400 font-semibold">--%</span>
                 </div>
                 <p class="text-[11px] text-slate-500 mt-2">Number of Sites</p>
                 <div class="border-t border-slate-800/80 my-3"></div>
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">NBRI 1st Report - Units</span>
-                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI 1st Report - Units</span>
+                    <div class="w-9 h-9 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
                         <i class="fa-solid fa-house-chimney"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
-                    <h2 id="kpi-report-units" class="text-3xl font-extrabold text-white">--</h2>
-                    <span class="text-xs text-purple-300 font-semibold">Units Planned</span>
+                    <h2 id="kpi-report-units" class="text-3xl font-extrabold text-fuchsia-300">--</h2>
+                    <span class="text-xs text-fuchsia-300 font-semibold">Units Planned</span>
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/40 transition">
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-purple-500/60 transition shadow-lg hover:shadow-purple-500/10">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Conceptual Plan Issued</span>
-                    <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Conceptual Plan Issued</span>
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-md shadow-purple-500/20">
                         <i class="fa-solid fa-sitemap"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
                     <h2 id="kpi-conceptual-issued" class="text-3xl font-extrabold text-white">--</h2>
-                    <span id="kpi-conceptual-pct" class="text-xs text-indigo-400 font-semibold">--%</span>
+                    <span id="kpi-conceptual-pct" class="text-xs text-purple-400 font-semibold">--%</span>
                 </div>
                 <p class="text-[11px] text-slate-500 mt-2">Number of Sites</p>
                 <div class="border-t border-slate-800/80 my-3"></div>
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">NBRI Conceptual Design - Units</span>
-                    <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI Conceptual Design - Units</span>
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
                         <i class="fa-solid fa-house-chimney"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
-                    <h2 id="kpi-conceptual-units" class="text-3xl font-extrabold text-white">--</h2>
-                    <span class="text-xs text-indigo-300 font-semibold">Units Planned</span>
+                    <h2 id="kpi-conceptual-units" class="text-3xl font-extrabold text-purple-300">--</h2>
+                    <span class="text-xs text-purple-300 font-semibold">Units Planned</span>
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/40 transition">
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/60 transition shadow-lg hover:shadow-emerald-500/10">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">BOD Completed</span>
-                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">BOD Completed</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/20">
                         <i class="fa-solid fa-circle-check"></i>
                     </div>
                 </div>
@@ -624,39 +601,39 @@ html_template = """
                 <p class="text-[11px] text-slate-500 mt-2">Number of Sites</p>
                 <div class="border-t border-slate-800/80 my-3"></div>
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">BOD Marked on Ground</span>
-                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">BOD Marked on Ground</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                         <i class="fa-solid fa-map-location-dot"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
-                    <h2 id="kpi-bod-marked" class="text-3xl font-extrabold text-white">--</h2>
+                    <h2 id="kpi-bod-marked" class="text-3xl font-extrabold text-emerald-300">--</h2>
                     <span class="text-xs text-emerald-300 font-semibold">Sites Marked</span>
                 </div>
             </div>
 
-            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-amber-500/40 transition">
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-orange-500/60 transition shadow-lg hover:shadow-orange-500/10">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">NBRI 2nd Report Issued</span>
-                    <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI 2nd Report Issued</span>
+                    <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shadow-md shadow-orange-500/20">
                         <i class="fa-solid fa-file-circle-check"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
                     <h2 id="kpi-report2-issued" class="text-3xl font-extrabold text-white">--</h2>
-                    <span id="kpi-report2-pct" class="text-xs text-amber-400 font-semibold">--%</span>
+                    <span id="kpi-report2-pct" class="text-xs text-orange-400 font-semibold">--%</span>
                 </div>
                 <p class="text-[11px] text-slate-500 mt-2">Number of Sites</p>
                 <div class="border-t border-slate-800/80 my-3"></div>
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">NBRI 2nd Report - Units</span>
-                    <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">NBRI 2nd Report - Units</span>
+                    <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
                         <i class="fa-solid fa-house-chimney"></i>
                     </div>
                 </div>
                 <div class="flex items-baseline gap-3">
-                    <h2 id="kpi-report2-units" class="text-3xl font-extrabold text-white">--</h2>
-                    <span class="text-xs text-amber-300 font-semibold">Units Planned</span>
+                    <h2 id="kpi-report2-units" class="text-3xl font-extrabold text-orange-300">--</h2>
+                    <span class="text-xs text-orange-300 font-semibold">Units Planned</span>
                 </div>
             </div>
         </section>
@@ -667,30 +644,30 @@ html_template = """
             <!-- LEFT 8 COLS -->
             <div class="lg:col-span-8 flex flex-col gap-6">
                 
-                <!-- GIS MAP WITH ESRI WORLD NAVIGATION DARK BASEMAP & GLOWING ADMINISTRATIVE BOUNDARIES -->
-                <div class="glass-panel rounded-2xl p-5 relative flex flex-col">
+                <!-- GIS MAP WITH ESRI WORLD NAVIGATION DARK BASEMAP -->
+                <div class="glass-panel rounded-2xl p-5 relative flex flex-col border border-fuchsia-500/20">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-lg shadow-cyan-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-fuchsia-400 animate-pulse shadow-lg shadow-fuchsia-400"></div>
                             <h3 class="text-base font-bold text-white">Interactive GIS Map (Esri Dark Navigation & Glowing Boundaries)</h3>
                         </div>
-                        <span id="district-tag" class="hidden text-xs px-3 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-lg shadow-purple-500/20 font-medium">
+                        <span id="district-tag" class="hidden text-xs px-3 py-1 rounded-lg bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40 shadow-lg shadow-fuchsia-500/20 font-medium">
                             <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> Active Glowing Boundary Focus
                         </span>
                     </div>
                     <div class="flex flex-wrap items-center gap-3 mb-3 text-[11px] text-slate-300">
                         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#94a3b8;"></span> No Reports Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#2563eb;"></span> NBRI 1st Report Issued</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#ec4899;"></span> NBRI 1st Report Issued + BOD Completed</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#facc15;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#06b6d4;"></span> NBRI 1st Report Issued</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#d946ef;"></span> NBRI 1st Report Issued + BOD Completed</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#f97316;"></span> NBRI 1st Report + BOD Completed + NBRI 2nd Report Issued</span>
                     </div>
                     <div class="w-full h-[450px] rounded-xl overflow-hidden relative border border-slate-800 shadow-2xl" id="map-container">
                         <div id="map" class="w-full h-full z-10"></div>
                     </div>
                 </div>
 
-                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION - HIGH QUALITY ATTRACTIVE COMBO CHART -->
-                <div class="glass-panel rounded-2xl p-5">
+                <!-- DISTRICT-WISE HOUSING UNIT DISTRIBUTION - NEON GRADIENT COMBO CHART -->
+                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/20">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -709,15 +686,15 @@ html_template = """
                 </div>
 
                 <!-- MAIN SITE DETAILS TABLE -->
-                <div class="glass-panel rounded-2xl p-5 overflow-hidden">
+                <div class="glass-panel rounded-2xl p-5 overflow-hidden border border-fuchsia-500/20">
                     <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-table-cells text-purple-400 text-sm"></i> Resettlement Site Details Registry
+                            <i class="fa-solid fa-table-cells text-fuchsia-400 text-sm"></i> Resettlement Site Details Registry
                         </h3>
                         <div class="flex items-center gap-3">
                             <div class="relative">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                                <input type="text" id="registry-search-input" list="registry-site-list" placeholder="Search & select a site..." class="w-56 bg-slate-900/90 text-xs text-slate-200 pl-8 pr-3 py-2 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none placeholder-slate-500">
+                                <input type="text" id="registry-search-input" list="registry-site-list" placeholder="Search & select a site..." class="w-56 bg-slate-950/90 text-xs text-slate-200 pl-8 pr-3 py-2 rounded-xl border border-slate-700 focus:border-fuchsia-400 focus:outline-none placeholder-slate-500">
                                 <datalist id="registry-site-list"></datalist>
                             </div>
                             <div class="text-xs text-slate-400 whitespace-nowrap" id="table-count">Showing 0 sites</div>
@@ -726,7 +703,7 @@ html_template = """
                     
                     <div class="max-h-[380px] overflow-y-auto overflow-x-auto pr-1 border border-slate-800/80 rounded-xl">
                         <table class="w-full min-w-[720px] text-left text-xs text-slate-300">
-                            <thead class="bg-slate-900/95 sticky top-0 z-20 text-slate-400 font-semibold uppercase border-b border-slate-800 backdrop-blur-md">
+                            <thead class="bg-slate-950/95 sticky top-0 z-20 text-slate-400 font-semibold uppercase border-b border-fuchsia-900/40 backdrop-blur-md">
                                 <tr>
                                     <th class="py-3 px-3">S.No</th>
                                     <th class="py-3 px-3">Region</th>
@@ -750,13 +727,13 @@ html_template = """
             <div class="lg:col-span-4 flex flex-col gap-6">
                 
                 <!-- SITE DISCUSSION / COMMENTS TAB -->
-                <div class="glass-panel rounded-2xl p-5 border border-cyan-500/30 flex flex-col justify-between shadow-xl">
+                <div class="glass-panel rounded-2xl p-5 border border-fuchsia-500/30 flex flex-col justify-between shadow-xl">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-comments text-cyan-400 text-sm"></i> Site Discussion
+                                <i class="fa-solid fa-comments text-fuchsia-400 text-sm"></i> Site Discussion
                             </h3>
-                            <span id="discussion-site-tag" class="text-[10px] text-cyan-300 bg-cyan-500/20 px-2.5 py-1 rounded-lg border border-cyan-500/30 font-semibold">No Site Selected</span>
+                            <span id="discussion-site-tag" class="text-[10px] text-fuchsia-300 bg-fuchsia-500/20 px-2.5 py-1 rounded-lg border border-fuchsia-500/30 font-semibold">No Site Selected</span>
                         </div>
                         <div id="site-progress-strip" class="hidden grid grid-cols-4 gap-1.5 mb-3"></div>
                         <div id="discussion-thread" class="bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 text-xs space-y-3 h-[220px] overflow-y-auto">
@@ -764,17 +741,17 @@ html_template = """
                         </div>
                     </div>
                     <div class="mt-3 flex items-center gap-2">
-                        <input type="text" id="discussion-input" disabled onkeypress="if(event.key==='Enter') postDiscussionComment();" placeholder="Select a site to comment..." class="w-full bg-slate-900/95 text-xs text-slate-200 px-3 py-2.5 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:outline-none placeholder-slate-500 disabled:opacity-50">
-                        <button id="discussion-send" onclick="postDiscussionComment()" disabled class="px-3.5 py-2.5 bg-cyan-600/40 hover:bg-cyan-600/60 disabled:opacity-40 disabled:cursor-not-allowed text-cyan-100 border border-cyan-500/40 rounded-xl text-xs font-semibold transition">
+                        <input type="text" id="discussion-input" disabled onkeypress="if(event.key==='Enter') postDiscussionComment();" placeholder="Select a site to comment..." class="w-full bg-slate-900/95 text-xs text-slate-200 px-3 py-2.5 rounded-xl border border-slate-700/80 focus:border-fuchsia-400 focus:outline-none placeholder-slate-500 disabled:opacity-50">
+                        <button id="discussion-send" onclick="postDiscussionComment()" disabled class="px-3.5 py-2.5 bg-fuchsia-600/40 hover:bg-fuchsia-600/60 disabled:opacity-40 disabled:cursor-not-allowed text-fuchsia-100 border border-fuchsia-500/40 rounded-xl text-xs font-semibold transition">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- CONCEPTUAL LAND SUBDIVISION PLAN STATUS -->
-                <div class="glass-panel rounded-2xl p-5">
+                <div class="glass-panel rounded-2xl p-5 border border-purple-500/20">
                     <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
-                        <i class="fa-solid fa-sitemap text-purple-400 text-sm"></i> Conceptual Land Subdivision Layout
+                        <i class="fa-solid fa-sitemap text-fuchsia-400 text-sm"></i> Conceptual Land Subdivision Layout
                     </h3>
                     <p class="text-xs text-slate-400 mb-4">Preparation of Zone-Based Resettlement Subdivisions</p>
                     <div class="relative h-[220px] flex items-center justify-center">
@@ -782,38 +759,38 @@ html_template = """
                     </div>
                 </div>
 
-                <!-- HSPTD AI ASSISTANT (placed directly below Conceptual Land Subdivision Layout) -->
+                <!-- HSPTD AI ASSISTANT -->
                 <div class="glass-panel-glow rounded-2xl p-6 flex flex-col shadow-2xl">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-sm shadow-lg shadow-purple-500/30">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-fuchsia-600 via-purple-600 to-cyan-500 flex items-center justify-center text-white text-sm shadow-lg shadow-fuchsia-500/40">
                                 <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
                             </div>
                             <div>
                                 <h3 class="text-base font-bold text-white flex items-center gap-2">
                                     HSPTD AI Assistant
-                                    <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-medium">Smart Query Engine</span>
+                                    <span class="text-[10px] bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 px-2 py-0.5 rounded-full font-medium">Smart Query Engine</span>
                                 </h3>
-                                <p class="text-xs text-purple-300">Ask any query regarding estate resettlement, report links, or district statistics</p>
+                                <p class="text-xs text-fuchsia-300">Ask any query regarding estate resettlement, report links, or district statistics</p>
                             </div>
                         </div>
-                        <button onclick="clearAIChat()" class="text-xs text-slate-400 hover:text-slate-200 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 transition">
+                        <button onclick="clearAIChat()" class="text-xs text-slate-400 hover:text-slate-200 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800 transition">
                             <i class="fa-solid fa-trash-can mr-1"></i> Clear Chat
                         </button>
                     </div>
 
                     <div id="ai-chat-box" class="h-[220px] overflow-y-auto space-y-3 p-4 bg-slate-950/90 rounded-xl border border-slate-800/90 text-xs mb-4 scroll-smooth">
                         <div class="flex gap-3">
-                            <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold shadow-md shadow-purple-500/20">AI</div>
+                            <div class="w-7 h-7 rounded-full bg-fuchsia-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold shadow-md shadow-fuchsia-500/30">AI</div>
                             <div class="bg-slate-900/90 text-slate-200 p-3 rounded-2xl border border-slate-800 max-w-[85%] leading-relaxed">
-                                <strong>Ayubowan!</strong> Welcome to the HSPTD AI Assistant. Ask me anything about estate site locations, district breakdown, BOD clearances, or direct report links in the drive!
+                                <strong>Ayubowan!</strong> Welcome to the HSPTD AI Assistant. Ask me anything about estate site locations, district breakdown, BOD clearances, or direct report links!
                             </div>
                         </div>
                     </div>
 
                     <div class="relative flex items-center">
-                        <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Type your query (e.g., 'Show details for Niriella', 'Which district has highest housing units?')..." class="w-full bg-slate-900/95 text-xs text-slate-200 pl-4 pr-12 py-3 rounded-xl border border-slate-700/80 focus:border-purple-500 focus:outline-none shadow-inner placeholder-slate-500">
-                        <button onclick="sendAIMessage()" class="absolute right-3 text-purple-400 hover:text-purple-300 p-2 transition transform active:scale-95">
+                        <input type="text" id="ai-input" onkeypress="handleAIPress(event)" placeholder="Type your query..." class="w-full bg-slate-950/95 text-xs text-slate-200 pl-4 pr-12 py-3 rounded-xl border border-slate-700/80 focus:border-fuchsia-500 focus:outline-none shadow-inner placeholder-slate-500">
+                        <button onclick="sendAIMessage()" class="absolute right-3 text-fuchsia-400 hover:text-fuchsia-300 p-2 transition transform active:scale-95">
                             <i class="fa-solid fa-paper-plane text-sm"></i>
                         </button>
                     </div>
@@ -825,16 +802,9 @@ html_template = """
     </main>
 
     <script>
-        // Currently logged-in user, injected server-side, used to attribute discussion comments
         window.currentUser = { name: "{{CURRENT_USER}}" };
-
-        // Live Google Sheets published CSV URL
         const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFPE1PkS8oObj7PuzcivONOj1Ma8avjhgDJmIbvo_5eTc7AgGHMRRjZNzKfpw3o2psI_jPppDHGSTM/pub?gid=2028064069&single=true&output=csv";
-
-        // Locally uploaded district boundary GeoJSON, embedded server-side by app.py (falls back to remote if not present)
         const LOCAL_DISTRICT_GEOJSON = {{DISTRICT_GEOJSON}};
-
-        // Fallback remote sources (used only if the local repo file isn't embedded)
         const SRI_LANKA_DISTRICTS_FALLBACK_URL = "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/LKA/ADM2/geoBoundaries-LKA-ADM2_simplified.geojson";
         const SRI_LANKA_COUNTRY_BORDER_URL = "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/LKA/ADM0/geoBoundaries-LKA-ADM0_simplified.geojson";
 
@@ -875,15 +845,12 @@ html_template = """
         function initMap() {
             mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([7.8731, 80.7718], 7.5);
             
-            // ESRI World Navigation Dark Blue Basemap
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 18,
-                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+                attribution: 'Tiles &copy; Esri'
             }).addTo(mapInstance);
 
             markersGroup = L.layerGroup().addTo(mapInstance);
-
-            // Overlay Sri Lanka administrative district boundaries (uploaded layer) + a permanently glowing country border
             fetchDistrictBoundaries();
             fetchCountryBorder();
         }
@@ -896,7 +863,6 @@ html_template = """
                 }).addTo(mapInstance);
                 return;
             }
-            // Fallback to remote source if the uploaded local geojson wasn't found alongside app.py
             fetch(SRI_LANKA_DISTRICTS_FALLBACK_URL)
                 .then(res => res.json())
                 .then(geojsonData => {
@@ -926,29 +892,26 @@ html_template = """
                 .catch(err => console.log('Country border load error:', err));
         }
 
-        // Districts stay plain/unlit by default; only the district that is currently
-        // selected (via dropdown, map click, or table row) gets the purple highlight glow.
-        // The Sri Lanka national border (separate layer above) glows at all times.
         function styleDistrictFeature(feature) {
             const shapeName = (feature.properties.shapeName || feature.properties.NAME_2 || feature.properties.district || feature.properties.DISTRICT || feature.properties.name || '').toLowerCase();
             const selected = selectedDistrictName.toLowerCase();
 
             if (selected !== 'all' && shapeName && shapeName.includes(selected)) {
                 return {
-                    color: '#4ade80',
+                    color: '#d946ef',
                     weight: 3,
                     opacity: 0.95,
-                    fillColor: '#4ade80',
+                    fillColor: '#d946ef',
                     fillOpacity: 0.25,
                     className: 'district-boundary-active'
                 };
             }
 
             return {
-                color: '#3b4a63',
+                color: '#3b3154',
                 weight: 1,
                 opacity: 0.5,
-                fillColor: '#3b4a63',
+                fillColor: '#3b3154',
                 fillOpacity: 0.02,
                 className: ''
             };
@@ -1014,7 +977,6 @@ html_template = """
                 const report2Issued = (r['NBRI 2nd Report - Issued'] || r['NBRI 2nd Report Issued'] || 'No').trim();
                 const report2Year = r['NBRI 2nd Report - Year '] || r['NBRI 2nd Report - Year'] || '';
 
-                // Per-stage "units" figures used to split each KPI card into Sites + Units Planned
                 const parseUnitsField = (val) => {
                     let v = val || '0';
                     if (typeof v === 'string') v = v.replace(/[^0-9]/g, '');
@@ -1024,7 +986,6 @@ html_template = """
                 const conceptualUnits = parseUnitsField(r['NBRI Conceptual Design - Units']);
                 const report2Units = parseUnitsField(r['NBRI 2nd Report - Units']);
                 
-                // Directly capture raw link from spreadsheet cell (handles SharePoint / Drive / Web URLs)
                 const reportLinkRaw = r['NBRI 1st Report - Link'] || r['Report Link'] || r['Link'] || '';
                 const reportLink = formatReportURL(reportLinkRaw, estate);
 
@@ -1048,7 +1009,6 @@ html_template = """
             if (!rawLink || rawLink.trim() === '' || rawLink.trim() === '-') return '';
             let cleaned = rawLink.trim();
 
-            // Direct URL (SharePoint / Google Drive / NBRI Web) check
             if (cleaned.toLowerCase().startsWith('http://') || cleaned.toLowerCase().startsWith('https://')) {
                 return cleaned;
             }
@@ -1056,7 +1016,6 @@ html_template = """
                 return 'https://' + cleaned;
             }
 
-            // Fallback for plain text site name reference
             return `https://www.google.com/search?q=NBRI+Report+${encodeURIComponent(cleaned)}+${encodeURIComponent(estateName)}`;
         }
 
@@ -1079,18 +1038,12 @@ html_template = """
             populateRegistrySearchList();
         }
 
-        // Fills the Registry Table's search bar autocomplete list with every known site,
-        // so the user can quickly type/search and select the exact site or place they need.
         function populateRegistrySearchList() {
             const list = document.getElementById('registry-site-list');
             if (!list) return;
             list.innerHTML = rawData.map(d => `<option value="${d.estate}">${d.district} • ${d.division}</option>`).join('');
         }
 
-        // Called on every keystroke in the Registry Table search bar. Filters the
-        // table's own rows to match the typed text, and if the typed value exactly
-        // matches a site, auto-selects it (map focus + discussion thread), same as
-        // clicking that row.
         function handleRegistrySearch() {
             renderMainTable();
             const val = document.getElementById('registry-search-input').value.trim().toLowerCase();
@@ -1134,7 +1087,6 @@ html_template = """
             const conceptualIssuedCount = filteredData.filter(d => (d.conceptualDesign || '').toLowerCase().includes('completed')).length;
             const report2IssuedCount = filteredData.filter(d => d.report2Issued.toLowerCase() === 'yes').length;
 
-            // Stage-wise "Units Planned" figures, sourced from their own sheet columns
             const report1UnitsSum = filteredData.reduce((acc, curr) => acc + (curr.report1Units || 0), 0);
             const conceptualUnitsSum = filteredData.reduce((acc, curr) => acc + (curr.conceptualUnits || 0), 0);
             const report2UnitsSum = filteredData.reduce((acc, curr) => acc + (curr.report2Units || 0), 0);
@@ -1193,7 +1145,6 @@ html_template = """
                 } else if (isReport1) {
                     pinClass = 'stage-1';
                 }
-                // else: no stage class -> default neutral/grey pin (no reports issued)
 
                 const customIcon = L.divIcon({
                     className: 'custom-pin-wrapper',
@@ -1205,17 +1156,17 @@ html_template = """
                 const marker = L.marker([site.lat, site.lng], { icon: customIcon });
                 
                 let linkButton = site.reportLink 
-                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 rounded-lg text-xs font-semibold hover:bg-cyan-500/50 transition"><i class="fa-solid fa-file-pdf mr-1"></i> Open Official Report Link</a>`
+                    ? `<a href="${site.reportLink}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 px-3 py-1.5 bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-400/40 rounded-lg text-xs font-semibold hover:bg-fuchsia-500/50 transition shadow-md shadow-fuchsia-500/20"><i class="fa-solid fa-file-pdf mr-1"></i> Open Official Report Link</a>`
                     : '<span class="text-[10px] text-slate-400 mt-1 block">No direct report link attached</span>';
 
                 marker.bindPopup(`
                     <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
-                        <h4 style="font-weight:700; color:#38bdf8; font-size:14px; margin-bottom:6px;">${site.estate}</h4>
+                        <h4 style="font-weight:700; color:#d946ef; font-size:14px; margin-bottom:6px;">${site.estate}</h4>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>1. Division:</b> ${site.division}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>2. District:</b> ${site.district}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>3. Region:</b> ${site.region}</p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. IA / RPC:</b> <span style="color:#a855f7; font-weight:700;">${site.ia}</span> / ${site.rpc}</p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. Planned Units:</b> <span style="color:#34d399; font-weight:700;">${site.units} Units</span></p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. IA / RPC:</b> <span style="color:#06b6d4; font-weight:700;">${site.ia}</span> / ${site.rpc}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. Planned Units:</b> <span style="color:#10b981; font-weight:700;">${site.units} Units</span></p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. NBRI 1st Report:</b> ${site.reportIssued} (${site.reportYear})</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>7. BOD Clearance:</b> ${site.bodCompleted}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>8. Perimeter Survey:</b> ${site.perimeterSurvey}</p>
@@ -1237,8 +1188,14 @@ html_template = """
         }
 
         function initCharts() {
-            // 1. District-wise Housing Units Combo Chart
+            // 1. NEON STYLED DISTRICT COMBO CHART
             const ctxDist = document.getElementById('districtChart').getContext('2d');
+            
+            // Neon Gradient for bar chart
+            let cyanGrad = ctxDist.createLinearGradient(0, 0, 0, 300);
+            cyanGrad.addColorStop(0, 'rgba(6, 182, 212, 0.85)');
+            cyanGrad.addColorStop(1, 'rgba(6, 182, 212, 0.15)');
+
             districtChartInstance = new Chart(ctxDist, {
                 type: 'bar',
                 data: {
@@ -1248,7 +1205,7 @@ html_template = """
                             label: 'Housing Units',
                             type: 'bar',
                             data: [],
-                            backgroundColor: 'rgba(6, 182, 212, 0.65)',
+                            backgroundColor: cyanGrad,
                             borderColor: '#06b6d4',
                             borderWidth: 1.5,
                             borderRadius: 6,
@@ -1258,12 +1215,14 @@ html_template = """
                             label: 'Number of Sites',
                             type: 'line',
                             data: [],
-                            borderColor: '#a855f7',
-                            backgroundColor: '#a855f7',
-                            borderWidth: 2.5,
-                            pointRadius: 4,
-                            pointHoverRadius: 7,
-                            tension: 0.3,
+                            borderColor: '#d946ef',
+                            backgroundColor: '#d946ef',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#d946ef',
+                            pointBorderColor: '#ffffff',
+                            pointHoverRadius: 8,
+                            tension: 0.4,
                             yAxisID: 'y1'
                         }
                     ]
@@ -1273,13 +1232,13 @@ html_template = """
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: { color: '#cbd5e1', font: { size: 11, family: 'Plus Jakarta Sans' } }
+                            labels: { color: '#e2e8f0', font: { size: 11, family: 'Plus Jakarta Sans' } }
                         },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(19, 17, 44, 0.95)',
+                            borderColor: '#d946ef',
                             borderWidth: 1
                         }
                     },
@@ -1300,15 +1259,15 @@ html_template = """
                             type: 'linear',
                             display: true,
                             position: 'right',
-                            ticks: { color: '#a855f7' },
+                            ticks: { color: '#d946ef' },
                             grid: { drawOnChartArea: false },
-                            title: { display: true, text: 'No. of Sites', color: '#a855f7', font: { size: 10 } }
+                            title: { display: true, text: 'No. of Sites', color: '#d946ef', font: { size: 10 } }
                         }
                     }
                 }
             });
 
-            // 2. Conceptual Subdivision Doughnut Chart
+            // 2. NEON STYLED SUBDIVISION DOUGHNUT CHART
             const ctxSub = document.getElementById('subdivisionChart').getContext('2d');
             subdivisionChartInstance = new Chart(ctxSub, {
                 type: 'doughnut',
@@ -1316,15 +1275,16 @@ html_template = """
                     labels: ['Completed', 'In Progress', 'Not Required', 'Pending'],
                     datasets: [{
                         data: [0, 0, 0, 0],
-                        backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6'],
-                        borderWidth: 0,
+                        backgroundColor: ['#10b981', '#06b6d4', '#f97316', '#d946ef'],
+                        borderWidth: 2,
+                        borderColor: '#15122b',
                         hoverOffset: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '70%',
+                    cutout: '68%',
                     plugins: {
                         legend: {
                             position: 'bottom',
@@ -1386,21 +1346,21 @@ html_template = """
 
             rowsToShow.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-800/60 border-b border-slate-800/40 cursor-pointer transition';
+                tr.className = 'hover:bg-fuchsia-950/30 border-b border-slate-800/40 cursor-pointer transition';
                 
                 tr.onclick = () => selectSiteRow(row);
 
                 let reportLinkHTML = row.reportLink 
-                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40 border border-cyan-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
+                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/40 border border-fuchsia-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
                     : `<span class="text-slate-600 text-[10px]">N/A</span>`;
 
                 tr.innerHTML = `
                     <td class="py-3 px-3 font-mono text-slate-400">${row.sno}</td>
                     <td class="py-3 px-3 font-semibold text-slate-200">${row.region}</td>
                     <td class="py-3 px-3 text-slate-300">${row.district}</td>
-                    <td class="py-3 px-3 font-bold text-cyan-300">${row.estate}</td>
+                    <td class="py-3 px-3 font-bold text-fuchsia-300">${row.estate}</td>
                     <td class="py-3 px-3 text-slate-400">${row.division}</td>
-                    <td class="py-3 px-3 text-right font-bold text-emerald-400">${row.units}</td>
+                    <td class="py-3 px-3 text-right font-bold text-cyan-400">${row.units}</td>
                     <td class="py-3 px-3 text-center">${row.reportIssued}</td>
                     <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
                     <td class="py-3 px-3 text-center">${reportLinkHTML}</td>
@@ -1423,7 +1383,7 @@ html_template = """
         function saveDiscussionStore(store) {
             try {
                 localStorage.setItem(DISCUSSION_STORAGE_KEY, JSON.stringify(store));
-            } catch (e) { /* storage unavailable, ignore */ }
+            } catch (e) {}
         }
 
         function siteDiscussionKey(site) {
@@ -1435,7 +1395,6 @@ html_template = """
                 mapInstance.setView([site.lat, site.lng], 13);
             }
 
-            // Update Selected District Glow on Map
             if (site.district) {
                 selectedDistrictName = site.district;
                 if (districtGeoJsonLayer) districtGeoJsonLayer.setStyle(styleDistrictFeature);
@@ -1463,9 +1422,9 @@ html_template = """
             ];
 
             strip.innerHTML = steps.map(s => `
-                <div class="rounded-lg px-1.5 py-2 text-center border ${s.done ? 'bg-emerald-500/10 border-emerald-500/40' : 'bg-slate-900/70 border-slate-800'}">
-                    <i class="fa-solid ${s.done ? 'fa-circle-check text-emerald-400' : 'fa-circle text-slate-600'} text-xs mb-1"></i>
-                    <div class="text-[9px] leading-tight ${s.done ? 'text-emerald-300' : 'text-slate-500'}">${s.label}</div>
+                <div class="rounded-lg px-1.5 py-2 text-center border ${s.done ? 'bg-fuchsia-500/20 border-fuchsia-500/50' : 'bg-slate-950/70 border-slate-800'}">
+                    <i class="fa-solid ${s.done ? 'fa-circle-check text-fuchsia-400' : 'fa-circle text-slate-600'} text-xs mb-1"></i>
+                    <div class="text-[9px] leading-tight ${s.done ? 'text-fuchsia-300' : 'text-slate-500'}">${s.label}</div>
                 </div>
             `).join('');
             strip.classList.remove('hidden');
@@ -1482,16 +1441,16 @@ html_template = """
             const comments = store[key] || [];
 
             if (comments.length === 0) {
-                thread.innerHTML = `<p class="text-slate-400 italic">No comments yet for <strong class="text-cyan-300">${currentSelectedSite.estate}</strong>. Be the first to add a note or observation about this site.</p>`;
+                thread.innerHTML = `<p class="text-slate-400 italic">No comments yet for <strong class="text-fuchsia-300">${currentSelectedSite.estate}</strong>. Be the first to add a note or observation about this site.</p>`;
                 return;
             }
 
             thread.innerHTML = comments.map(c => `
                 <div class="flex gap-2.5">
-                    <div class="w-6 h-6 rounded-full bg-cyan-600/70 flex-shrink-0 flex items-center justify-center text-[10px] text-white font-bold">${(c.author || 'U').charAt(0).toUpperCase()}</div>
+                    <div class="w-6 h-6 rounded-full bg-fuchsia-600/80 flex-shrink-0 flex items-center justify-center text-[10px] text-white font-bold">${(c.author || 'U').charAt(0).toUpperCase()}</div>
                     <div class="bg-slate-900/90 text-slate-200 p-2.5 rounded-xl border border-slate-800 flex-1">
                         <div class="flex items-center justify-between mb-0.5">
-                            <span class="text-[11px] font-semibold text-cyan-300">${c.author || 'User'}</span>
+                            <span class="text-[11px] font-semibold text-fuchsia-300">${c.author || 'User'}</span>
                             <span class="text-[9px] text-slate-500">${c.time || ''}</span>
                         </div>
                         <p class="text-[11px] leading-relaxed">${c.text}</p>
@@ -1540,7 +1499,7 @@ html_template = """
             const chatBox = document.getElementById('ai-chat-box');
             chatBox.innerHTML += `
                 <div class="flex justify-end mb-2">
-                    <div class="bg-purple-600/80 text-white p-2.5 rounded-2xl max-w-[80%] shadow-md">
+                    <div class="bg-fuchsia-600/80 text-white p-2.5 rounded-2xl max-w-[80%] shadow-md">
                         ${msg}
                     </div>
                 </div>
@@ -1550,7 +1509,6 @@ html_template = """
             setTimeout(() => {
                 let aiReply = `Analyzed live dashboard database for <strong>"${msg}"</strong>: currently filtering <strong>${filteredData.length} sites</strong>.`;
                 
-                // Smart auto responses based on query keywords
                 const lowerMsg = msg.toLowerCase();
                 if (lowerMsg.includes('report') || lowerMsg.includes('link') || lowerMsg.includes('drive')) {
                     aiReply = `All Google Drive / SharePoint report links are directly synchronized from the sheet under column 'NBRI 1st Report - Link'. Click any site row or map marker to launch the direct PDF report!`;
@@ -1560,7 +1518,7 @@ html_template = """
 
                 chatBox.innerHTML += `
                     <div class="flex gap-3 mb-2">
-                        <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold">AI</div>
+                        <div class="w-7 h-7 rounded-full bg-fuchsia-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold">AI</div>
                         <div class="bg-slate-900/95 text-slate-200 p-3 rounded-2xl border border-slate-800/80 max-w-[85%] leading-relaxed">
                             ${aiReply}
                         </div>
@@ -1574,7 +1532,7 @@ html_template = """
             const chatBox = document.getElementById('ai-chat-box');
             chatBox.innerHTML = `
                 <div class="flex gap-3">
-                    <div class="w-7 h-7 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold">AI</div>
+                    <div class="w-7 h-7 rounded-full bg-fuchsia-600 flex-shrink-0 flex items-center justify-center text-xs text-white font-bold">AI</div>
                     <div class="bg-slate-900/90 text-slate-200 p-3 rounded-2xl border border-slate-800 max-w-[85%] leading-relaxed">
                         Chat cleared! How can I assist you with the resettlement dataset?
                     </div>
@@ -1617,7 +1575,7 @@ if st.session_state.show_notifications:
                 st.rerun()
 
         if not st.session_state.notifications:
-            st.caption("No updates yet. New sheet changes (report status, BOD clearance, conceptual plan, new sites) will show up here.")
+            st.caption("No updates yet. New sheet changes will show up here.")
         else:
             for n in st.session_state.notifications[:20]:
                 st.markdown(f"- {n['text']}  \n  <span style='color:#94a3b8; font-size:0.75rem;'>{n['time']}</span>", unsafe_allow_html=True)
