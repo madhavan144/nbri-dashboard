@@ -413,7 +413,7 @@ html_template = """
         }
 
         .leaflet-container {
-            background: #090814 !important;
+            background: #000511 !important;
             font-family: 'Plus Jakarta Sans', sans-serif !important;
         }
         .leaflet-popup-content-wrapper {
@@ -428,12 +428,16 @@ html_template = """
             background: rgba(21, 18, 43, 0.95) !important;
         }
 
-        .district-boundary-active {
-            filter: drop-shadow(0px 0px 12px #d946ef) drop-shadow(0px 0px 25px #d946ef);
-            transition: all 0.4s ease-in-out;
-        }
-        .country-border-glow {
-            filter: drop-shadow(0px 0px 8px #06b6d4) drop-shadow(0px 0px 16px rgba(6, 182, 212, 0.7));
+        /* Custom District Tooltip Styling */
+        .leaflet-tooltip.district-tooltip {
+            background-color: rgba(15, 23, 42, 0.9);
+            border: 1px solid #38bdf8;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
     </style>
 </head>
@@ -644,15 +648,15 @@ html_template = """
             <!-- LEFT 8 COLS -->
             <div class="lg:col-span-8 flex flex-col gap-6">
                 
-                <!-- GIS MAP WITH ESRI WORLD NAVIGATION DARK BASEMAP -->
+                <!-- GIS MAP WITH MAPTILER NIGHT SATELLITE BASEMAP -->
                 <div class="glass-panel rounded-2xl p-5 relative flex flex-col border border-fuchsia-500/20">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2.5">
                             <div class="w-3 h-3 rounded-full bg-fuchsia-400 animate-pulse shadow-lg shadow-fuchsia-400"></div>
-                            <h3 class="text-base font-bold text-white">Interactive GIS Map (Esri Dark Navigation & Glowing Boundaries)</h3>
+                            <h3 class="text-base font-bold text-white">Interactive GIS Map (MapTiler Night Satellite & Boundaries)</h3>
                         </div>
                         <span id="district-tag" class="hidden text-xs px-3 py-1 rounded-lg bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40 shadow-lg shadow-fuchsia-500/20 font-medium">
-                            <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> Active Glowing Boundary Focus
+                            <i class="fa-solid fa-bullseye mr-1 animate-spin"></i> Active District Focus
                         </span>
                     </div>
                     <div class="flex flex-wrap items-center gap-3 mb-3 text-[11px] text-slate-300">
@@ -805,15 +809,14 @@ html_template = """
         window.currentUser = { name: "{{CURRENT_USER}}" };
         const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFPE1PkS8oObj7PuzcivONOj1Ma8avjhgDJmIbvo_5eTc7AgGHMRRjZNzKfpw3o2psI_jPppDHGSTM/pub?gid=2028064069&single=true&output=csv";
         const LOCAL_DISTRICT_GEOJSON = {{DISTRICT_GEOJSON}};
-        const SRI_LANKA_DISTRICTS_FALLBACK_URL = "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/LKA/ADM2/geoBoundaries-LKA-ADM2_simplified.geojson";
-        const SRI_LANKA_COUNTRY_BORDER_URL = "https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/LKA/ADM0/geoBoundaries-LKA-ADM0_simplified.geojson";
+        const SRI_LANKA_DISTRICTS_FALLBACK_URL = 'https://raw.githubusercontent.com/arunasank/sri-lanka-district-boundaries/master/district.geojson';
 
         let rawData = [];
         let filteredData = [];
         let mapInstance = null;
         let markersGroup = null;
-        let districtGeoJsonLayer = null;
-        let countryBorderLayer = null;
+        let geojsonLayer = null;
+        let selectedLayer = null;
         let selectedDistrictName = 'ALL';
         
         let districtChartInstance = null;
@@ -835,6 +838,31 @@ html_template = """
             "Matale": { lat: 7.4675, lng: 80.6234 }
         };
 
+        // District Style Settings from Code 1
+        const defaultStyle = {
+            fillColor: '#0284c7',
+            weight: 1.5,
+            opacity: 0.9,
+            color: '#38bdf8',
+            dashArray: '3',
+            fillOpacity: 0.25
+        };
+
+        const hoverStyle = {
+            weight: 2.5,
+            color: '#f59e0b',
+            dashArray: '',
+            fillOpacity: 0.45
+        };
+
+        const activeClickStyle = {
+            weight: 3.5,
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            dashArray: '',
+            fillOpacity: 0.6
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             initCharts();
@@ -843,88 +871,83 @@ html_template = """
         });
 
         function initMap() {
-            mapInstance = L.map('map', { zoomControl: true, attributionControl: false }).setView([7.8731, 80.7718], 7.5);
+            // Initialize Map centered on Sri Lanka
+            mapInstance = L.map('map', { 
+                center: [7.8731, 80.7718],
+                zoom: 7.5,
+                zoomSnap: 0.5,
+                zoomControl: true, 
+                attributionControl: false 
+            });
             
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 18,
-                attribution: 'Tiles &copy; Esri'
-            }).addTo(mapInstance);
+            // MapTiler Night Satellite Integration from Code 1
+            const mapTilerKey = 'fUTucmIPXiiP83MTzMn7';
+            L.tileLayer(
+                `https://api.maptiler.com/tiles/satellite-night/{z}/{x}/{y}.jpg?key=${mapTilerKey}`, 
+                {
+                    tileSize: 512,
+                    zoomOffset: -1,
+                    minZoom: 1,
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; OpenStreetMap contributors',
+                    crossOrigin: true
+                }
+            ).addTo(mapInstance);
 
             markersGroup = L.layerGroup().addTo(mapInstance);
             fetchDistrictBoundaries();
-            fetchCountryBorder();
-        }
 
-        function fetchDistrictBoundaries() {
-            if (LOCAL_DISTRICT_GEOJSON) {
-                districtGeoJsonLayer = L.geoJSON(LOCAL_DISTRICT_GEOJSON, {
-                    style: styleDistrictFeature,
-                    onEachFeature: onEachDistrictFeature
-                }).addTo(mapInstance);
-                return;
-            }
-            fetch(SRI_LANKA_DISTRICTS_FALLBACK_URL)
-                .then(res => res.json())
-                .then(geojsonData => {
-                    districtGeoJsonLayer = L.geoJSON(geojsonData, {
-                        style: styleDistrictFeature,
-                        onEachFeature: onEachDistrictFeature
-                    }).addTo(mapInstance);
-                })
-                .catch(err => console.log('District GeoJSON load error:', err));
-        }
-
-        function fetchCountryBorder() {
-            fetch(SRI_LANKA_COUNTRY_BORDER_URL)
-                .then(res => res.json())
-                .then(geojsonData => {
-                    countryBorderLayer = L.geoJSON(geojsonData, {
-                        style: {
-                            color: '#06b6d4',
-                            weight: 2.5,
-                            opacity: 0.9,
-                            fillOpacity: 0,
-                            className: 'country-border-glow'
-                        },
-                        interactive: false
-                    }).addTo(mapInstance);
-                })
-                .catch(err => console.log('Country border load error:', err));
-        }
-
-        function styleDistrictFeature(feature) {
-            const shapeName = (feature.properties.shapeName || feature.properties.NAME_2 || feature.properties.district || feature.properties.DISTRICT || feature.properties.name || '').toLowerCase();
-            const selected = selectedDistrictName.toLowerCase();
-
-            if (selected !== 'all' && shapeName && shapeName.includes(selected)) {
-                return {
-                    color: '#d946ef',
-                    weight: 3,
-                    opacity: 0.95,
-                    fillColor: '#d946ef',
-                    fillOpacity: 0.25,
-                    className: 'district-boundary-active'
-                };
-            }
-
-            return {
-                color: '#3b3154',
-                weight: 1,
-                opacity: 0.5,
-                fillColor: '#3b3154',
-                fillOpacity: 0.02,
-                className: ''
-            };
+            // Map click reset event
+            mapInstance.on('click', function() {
+                if (selectedLayer && geojsonLayer) {
+                    geojsonLayer.resetStyle(selectedLayer);
+                    selectedLayer = null;
+                }
+            });
         }
 
         function onEachDistrictFeature(feature, layer) {
-            const dName = feature.properties.shapeName || feature.properties.NAME_2 || feature.properties.district || feature.properties.DISTRICT || feature.properties.name || 'District';
+            const props = feature.properties;
+            const districtName = props.district || props.NAME_1 || props.dis_name || props.ADM2_EN || props.shapeName || props.NAME_2 || "District";
+
+            // Attach Tooltip
+            layer.bindTooltip(districtName, {
+                sticky: true,
+                direction: "auto",
+                className: "district-tooltip"
+            });
 
             layer.on({
-                click: (e) => {
+                mouseover: function (e) {
+                    const currentLayer = e.target;
+                    if (currentLayer !== selectedLayer) {
+                        currentLayer.setStyle(hoverStyle);
+                        currentLayer.bringToFront();
+                    }
+                },
+                mouseout: function (e) {
+                    const currentLayer = e.target;
+                    if (currentLayer !== selectedLayer && geojsonLayer) {
+                        geojsonLayer.resetStyle(currentLayer);
+                    }
+                },
+                click: function (e) {
+                    L.DomEvent.stopPropagation(e);
+
+                    if (selectedLayer && geojsonLayer) {
+                        geojsonLayer.resetStyle(selectedLayer);
+                    }
+
+                    selectedLayer = e.target;
+                    selectedLayer.setStyle(activeClickStyle);
+                    selectedLayer.bringToFront();
+
+                    mapInstance.fitBounds(e.target.getBounds(), { padding: [30, 30], maxZoom: 10 });
+
+                    // Trigger filter selection for District
                     const distSelect = document.getElementById('filter-district');
                     for (let opt of distSelect.options) {
-                        if (opt.value.toLowerCase() === dName.toLowerCase()) {
+                        if (opt.value.toLowerCase() === districtName.toLowerCase()) {
                             distSelect.value = opt.value;
                             applyFilters();
                             break;
@@ -932,6 +955,25 @@ html_template = """
                     }
                 }
             });
+        }
+
+        function fetchDistrictBoundaries() {
+            if (LOCAL_DISTRICT_GEOJSON) {
+                geojsonLayer = L.geoJSON(LOCAL_DISTRICT_GEOJSON, {
+                    style: defaultStyle,
+                    onEachFeature: onEachDistrictFeature
+                }).addTo(mapInstance);
+                return;
+            }
+            fetch(SRI_LANKA_DISTRICTS_FALLBACK_URL)
+                .then(res => res.json())
+                .then(geojsonData => {
+                    geojsonLayer = L.geoJSON(geojsonData, {
+                        style: defaultStyle,
+                        onEachFeature: onEachDistrictFeature
+                    }).addTo(mapInstance);
+                })
+                .catch(err => console.log('District GeoJSON load error:', err));
         }
 
         function fetchCSVData() {
@@ -1071,9 +1113,6 @@ html_template = """
 
             updateKPIs();
             updateMapMarkers(districtVal);
-            if (districtGeoJsonLayer) {
-                districtGeoJsonLayer.setStyle(styleDistrictFeature);
-            }
             updateDistrictChart();
             updateCharts();
             renderMainTable();
@@ -1397,7 +1436,6 @@ html_template = """
 
             if (site.district) {
                 selectedDistrictName = site.district;
-                if (districtGeoJsonLayer) districtGeoJsonLayer.setStyle(styleDistrictFeature);
             }
 
             currentSelectedSite = site;
