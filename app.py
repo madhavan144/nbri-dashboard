@@ -61,131 +61,6 @@ DISTRICT_GEOJSON_DATA = load_local_district_geojson()
 DISTRICT_GEOJSON_JS = json.dumps(DISTRICT_GEOJSON_DATA) if DISTRICT_GEOJSON_DATA else "null"
 
 # ==========================================
-# 2c. LOGIN / SIGNUP GATE
-# ==========================================
-USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users_store.json")
-
-def load_users_from_disk():
-    try:
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, dict) and data:
-                return data
-    except Exception:
-        pass
-    return {"admin": "admin123"}
-
-def save_users_to_disk(users):
-    try:
-        with open(USERS_FILE, "w", encoding="utf-8") as f:
-            json.dump(users, f)
-    except Exception:
-        pass
-
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "users" not in st.session_state:
-    st.session_state.users = load_users_from_disk()
-if "auth_mode" not in st.session_state:
-    st.session_state.auth_mode = "login"
-if "current_user" not in st.session_state:
-    st.session_state.current_user = ""
-
-def render_login_gate():
-    st.markdown(f"""
-        <style>
-            .stApp {{
-                background: linear-gradient(rgba(13, 12, 29, 0.92), rgba(19, 17, 44, 0.95)), url('{BG_IMAGE_URL}');
-                background-size: cover;
-                background-position: center;
-                background-attachment: fixed;
-            }}
-            .auth-wrapper {{
-                max-width: 420px;
-                margin: 6vh auto 2rem auto;
-                padding: 2.5rem 2.25rem;
-                border-radius: 20px;
-                background: rgba(19, 17, 44, 0.88);
-                border: 1px solid rgba(217, 70, 239, 0.3);
-                box-shadow: 0 20px 50px -15px rgba(0,0,0,0.8), 0 0 30px rgba(217, 70, 239, 0.15);
-                backdrop-filter: blur(16px);
-                text-align: center;
-            }}
-            .auth-wrapper img {{
-                width: 64px;
-                height: 64px;
-                object-fit: contain;
-                margin-bottom: 0.75rem;
-            }}
-            .auth-title {{
-                color: #f8fafc;
-                font-size: 1.35rem;
-                font-weight: 800;
-                letter-spacing: 0.02em;
-                margin-bottom: 0.15rem;
-            }}
-            .auth-subtitle {{
-                color: #a78bfa;
-                font-size: 0.85rem;
-                margin-bottom: 1.5rem;
-            }}
-            div[data-testid="stForm"] {{
-                background: transparent;
-                border: none;
-            }}
-        </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-        <div class="auth-wrapper">
-            <img src="{LOGO_URL}" alt="Logo">
-            <div class="auth-title">IHP 4700 RESETTLEMENT DASHBOARD</div>
-            <div class="auth-subtitle">Secure access &middot; Resettlement Progress & Spatial Monitoring</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    _, col, _ = st.columns([1, 1.3, 1])
-    with col:
-        tab_login, tab_signup = st.tabs(["Login", "Sign Up"])
-
-        with tab_login:
-            with st.form("login_form", clear_on_submit=False):
-                username = st.text_input("Username", key="login_user")
-                password = st.text_input("Password", type="password", key="login_pass")
-                submitted = st.form_submit_button("Log In", use_container_width=True)
-                if submitted:
-                    if username in st.session_state.users and st.session_state.users[username] == password:
-                        st.session_state.authenticated = True
-                        st.session_state.current_user = username
-                        st.rerun()
-                    else:
-                        st.error("Invalid username or password.")
-
-        with tab_signup:
-            with st.form("signup_form", clear_on_submit=False):
-                new_user = st.text_input("Choose a username", key="signup_user")
-                new_pass = st.text_input("Choose a password", type="password", key="signup_pass")
-                confirm_pass = st.text_input("Confirm password", type="password", key="signup_confirm")
-                signed_up = st.form_submit_button("Create Account", use_container_width=True)
-                if signed_up:
-                    if not new_user or not new_pass:
-                        st.error("Please fill in all fields.")
-                    elif new_pass != confirm_pass:
-                        st.error("Passwords do not match.")
-                    elif new_user in st.session_state.users:
-                        st.error("That username is already taken.")
-                    else:
-                        st.session_state.users[new_user] = new_pass
-                        save_users_to_disk(st.session_state.users)
-                        st.success("Account created! Please log in from the Login tab.")
-
-    st.caption("Demo credentials: admin / admin123")
-
-if not st.session_state.authenticated:
-    render_login_gate()
-    st.stop()
-
-# ==========================================
 # 2d. LIVE SHEET-UPDATE NOTIFICATIONS
 # ==========================================
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFPE1PkS8oObj7PuzcivONOj1Ma8avjhgDJmIbvo_5eTc7AgGHMRRjZNzKfpw3o2psI_jPppDHGSTM/pub?gid=2028064069&single=true&output=csv"
@@ -806,7 +681,7 @@ html_template = """
     </main>
 
     <script>
-        window.currentUser = { name: "{{CURRENT_USER}}" };
+        window.currentUser = { name: "User" };
         const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFPE1PkS8oObj7PuzcivONOj1Ma8avjhgDJmIbvo_5eTc7AgGHMRRjZNzKfpw3o2psI_jPppDHGSTM/pub?gid=2028064069&single=true&output=csv";
         const LOCAL_DISTRICT_GEOJSON = {{DISTRICT_GEOJSON}};
         const SRI_LANKA_DISTRICTS_FALLBACK_URL = 'https://raw.githubusercontent.com/arunasank/sri-lanka-district-boundaries/master/district.geojson';
@@ -1588,18 +1463,13 @@ html_template = """
 unread_count = sum(1 for n in st.session_state.notifications if not n["read"])
 bell_label = f"🔔 Notifications ({unread_count})" if unread_count > 0 else "🔔 Notifications"
 
-top_left, bell_col, logout_col = st.columns([6, 1.4, 1])
+top_left, bell_col = st.columns([6, 1.4])
 with bell_col:
     if st.button(bell_label, use_container_width=True):
         check_for_sheet_updates(silent_baseline=False)
         st.session_state.show_notifications = not st.session_state.show_notifications
         for n in st.session_state.notifications:
             n["read"] = True
-        st.rerun()
-with logout_col:
-    if st.button("Logout", use_container_width=True):
-        st.session_state.authenticated = False
-        st.session_state.current_user = ""
         st.rerun()
 
 if st.session_state.show_notifications:
@@ -1622,6 +1492,5 @@ html_dashboard = (
     html_template
     .replace("{{LOGO_URL}}", LOGO_URL)
     .replace("{{DISTRICT_GEOJSON}}", DISTRICT_GEOJSON_JS)
-    .replace("{{CURRENT_USER}}", st.session_state.current_user or "User")
 )
 components.html(html_dashboard, height=1550, scrolling=True)
