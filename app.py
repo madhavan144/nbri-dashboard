@@ -592,7 +592,8 @@ html_template = """
                                     <th class="py-3 px-3 text-right">Units</th>
                                     <th class="py-3 px-3 text-center">1st Report</th>
                                     <th class="py-3 px-3 text-center">BOD</th>
-                                    <th class="py-3 px-3 text-center">Report Link</th>
+                                    <th class="py-3 px-3 text-center">Conceptual Plan</th>
+                                    <th class="py-3 px-3 text-center">Report Issued</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium"></tbody>
@@ -1081,7 +1082,7 @@ html_template = """
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>3. Region:</b> ${site.region}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. IA / RPC:</b> <span style="color:#06b6d4; font-weight:700;">${site.ia}</span> / ${site.rpc}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. Planned Units:</b> <span style="color:#10b981; font-weight:700;">${site.units} Units</span></p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. NBRI 1st Report:</b> ${site.reportIssued} (${site.reportYear})</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. NBRI 1st Report:</b> ${site.reportIssued}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>7. BOD Clearance:</b> ${site.bodCompleted}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>8. Perimeter Survey:</b> ${site.perimeterSurvey}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>9. Drone Survey:</b> ${site.droneSurvey}</p>
@@ -1264,9 +1265,8 @@ html_template = """
                 
                 tr.onclick = () => selectSiteRow(row);
 
-                let reportLinkHTML = row.reportLink 
-                    ? `<a href="${row.reportLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-300 hover:bg-fuchsia-500/40 border border-fuchsia-500/30 text-[11px] font-semibold transition"><i class="fa-solid fa-file-pdf"></i> View Link</a>`
-                    : `<span class="text-slate-600 text-[10px]">N/A</span>`;
+                const conceptDisplay = (row.conceptualDesign || '').toLowerCase().includes('completed') ? 'Yes' : row.conceptualDesign;
+                const reportIssuedDisplay = (row.reportIssued || '').toLowerCase() === 'yes' ? 'Yes' : row.reportIssued;
 
                 tr.innerHTML = `
                     <td class="py-3 px-3 font-mono text-slate-400">${row.sno}</td>
@@ -1277,7 +1277,8 @@ html_template = """
                     <td class="py-3 px-3 text-right font-bold text-cyan-400">${row.units}</td>
                     <td class="py-3 px-3 text-center">${row.reportIssued}</td>
                     <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
-                    <td class="py-3 px-3 text-center">${reportLinkHTML}</td>
+                    <td class="py-3 px-3 text-center">${conceptDisplay}</td>
+                    <td class="py-3 px-3 text-center">${reportIssuedDisplay}</td>
                 `;
                 tbody.appendChild(tr);
             });
