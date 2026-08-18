@@ -885,7 +885,7 @@ html_template = """
                 if (typeof rawUnits === 'string') rawUnits = rawUnits.replace(/[^0-9]/g, '');
                 const units = parseInt(rawUnits) || 0;
 
-                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'Yes').trim();
+                const reportIssued = (r['NBRI 1st Report - Issued'] || r['NBRI 1st Report Issued'] || 'No').trim();
                 const reportYear = r['NBRI 1st Report - Year '] || r['NBRI 1st Report - Year'] || '2026';
                 const bodCompleted = (r['BOD Completed'] || 'No').trim();
                 const bodMarkedOnGround = (r['BOD Marked on Ground'] || r['BOD Morked on Ground'] || 'No').trim();
@@ -1082,7 +1082,7 @@ html_template = """
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>3. Region:</b> ${site.region}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>4. IA / RPC:</b> <span style="color:#06b6d4; font-weight:700;">${site.ia}</span> / ${site.rpc}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>5. Planned Units:</b> <span style="color:#10b981; font-weight:700;">${site.units} Units</span></p>
-                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. NBRI 1st Report:</b> ${site.reportIssued}</p>
+                        <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>6. NBRI 1st Report:</b> ${site.reportIssued} (${site.reportYear})</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>7. BOD Clearance:</b> ${site.bodCompleted}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>8. Perimeter Survey:</b> ${site.perimeterSurvey}</p>
                         <p style="font-size:11px; color:#cbd5e1; margin:2px 0;"><b>9. Drone Survey:</b> ${site.droneSurvey}</p>
@@ -1265,8 +1265,14 @@ html_template = """
                 
                 tr.onclick = () => selectSiteRow(row);
 
-                const conceptDisplay = (row.conceptualDesign || '').toLowerCase().includes('completed') ? 'Yes' : row.conceptualDesign;
-                const reportIssuedDisplay = (row.reportIssued || '').toLowerCase() === 'yes' ? 'Yes' : row.reportIssued;
+                const conceptualPlanYes = (row.conceptualDesign || '').trim().toLowerCase() === 'yes';
+                let conceptualPlanHTML = conceptualPlanYes
+                    ? `<span class="text-emerald-400 font-semibold">Yes</span>`
+                    : `<span class="text-slate-500">${row.conceptualDesign || 'No'}</span>`;
+
+                let reportIssuedHTML = row.reportLink 
+                    ? `<span class="text-emerald-400 font-semibold">Yes</span>`
+                    : `<span class="text-slate-600 text-[10px]">N/A</span>`;
 
                 tr.innerHTML = `
                     <td class="py-3 px-3 font-mono text-slate-400">${row.sno}</td>
@@ -1277,8 +1283,8 @@ html_template = """
                     <td class="py-3 px-3 text-right font-bold text-cyan-400">${row.units}</td>
                     <td class="py-3 px-3 text-center">${row.reportIssued}</td>
                     <td class="py-3 px-3 text-center">${row.bodCompleted}</td>
-                    <td class="py-3 px-3 text-center">${conceptDisplay}</td>
-                    <td class="py-3 px-3 text-center">${reportIssuedDisplay}</td>
+                    <td class="py-3 px-3 text-center">${conceptualPlanHTML}</td>
+                    <td class="py-3 px-3 text-center">${reportIssuedHTML}</td>
                 `;
                 tbody.appendChild(tr);
             });
